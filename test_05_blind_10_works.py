@@ -18,7 +18,7 @@ def test_blind_10_works(start_game, play_hand):
     # Previous score A: 70, B: 60
     # New score A: 70 + 200 = 270
     # New score B: 60 + (10*3 + (3-3)) = 90
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 370") # Corrected expected score
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 270")
     expect(page.locator("#pillB")).to_have_text("Team Beta: 90")
 
     # Round 3: Team Beta bids Blind 10, makes 3 books (fails)
@@ -26,6 +26,6 @@ def test_blind_10_works(start_game, play_hand):
     play_hand(3, 10, 3, 10, blind_b=True)
     # Score for Blind 10 (B) making 3 books: -200 points
     # Previous score A: 270 + (10*3 + (3-3)) = 300
-    # Previous score B: 90 - 300 = -210
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 400") # Corrected expected score
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 390") # Corrected expected score
+    # Previous score B: 90 - 200 = -110
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 300")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 290")

@@ -197,25 +197,11 @@ function scoreHand(
   }
   let scoreA = booksA >= bidA ? 10 * bidA + (booksA - bidA) : -10 * bidA;
   let scoreB = booksB >= bidB ? 10 * bidB + (booksB - bidB) : -10 * bidB;
+
   const bagA = booksA > bidA ? booksA - bidA : 0;
   const bagB = booksB > bidB ? booksB - bidB : 0;
-  state.bagsA += bagA;
-  state.bagsB += bagB;
-  if (state.bagsA >= 10) {
-    scoreA -= 100;
-    state.bagsA -= 10;
-  }
-  if (state.bagsB >= 10) {
-    scoreB -= 100;
-    state.bagsB -= 10;
-  }
-  if (blindA) {
-    scoreA += booksA >= 10 ? 200 : -200;
-  }
-  if (blindB) {
-    scoreB += booksB >= 10 ? 200 : -200;
-  }
-  return { scoreA, scoreB, imm: false };
+
+  return { scoreA, scoreB, bagA, bagB, imm: false };
 }
 
 function checkWin() {
@@ -272,7 +258,13 @@ function deleteLastHand() {
     const r = idx + 1;
     const bA = orig.bidA === "-" ? 0 : +orig.bidA;
     const bB = orig.bidB === "-" ? 0 : +orig.bidB;
-    const { scoreA, scoreB, imm } = scoreHand(
+    const {
+      scoreA: baseScoreA,
+      scoreB: baseScoreB,
+      bagA,
+      bagB,
+      imm,
+    } = scoreHand(
       r,
       bA,
       bB,
@@ -281,6 +273,31 @@ function deleteLastHand() {
       !!orig.blindA,
       !!orig.blindB,
     );
+
+    let scoreA = baseScoreA;
+    let scoreB = baseScoreB;
+
+    // Apply Blind 10 scoring
+    if (!!orig.blindA) {
+      scoreA = +orig.booksA >= 10 ? 200 + (+orig.booksA - 10) : -200;
+    }
+    if (!!orig.blindB) {
+      scoreB = +orig.booksB >= 10 ? 200 + (+orig.booksB - 10) : -200;
+    }
+
+    state.bagsA += bagA;
+    state.bagsB += bagB;
+
+    // Apply bag penalties (only if not a blind bid)
+    if (!orig.blindA && state.bagsA >= 10) {
+      scoreA -= 100;
+      state.bagsA -= 10;
+    }
+    if (!orig.blindB && state.bagsB >= 10) {
+      scoreB -= 100;
+      state.bagsB -= 10;
+    }
+
     const recA =
       r === 1 && imm && (scoreA === -99999 || scoreB === -99999) ? 0 : scoreA;
     const recB =
@@ -397,7 +414,13 @@ document.addEventListener("DOMContentLoaded", () => {
       $("#status").textContent = "Books must sum to 13";
       return;
     }
-    const { scoreA, scoreB, imm } = scoreHand(
+    const {
+      scoreA: baseScoreA,
+      scoreB: baseScoreB,
+      bagA,
+      bagB,
+      imm,
+    } = scoreHand(
       state.round,
       bidA,
       bidB,
@@ -406,6 +429,30 @@ document.addEventListener("DOMContentLoaded", () => {
       state.blind10A,
       state.blind10B,
     );
+
+    let scoreA = baseScoreA;
+    let scoreB = baseScoreB;
+
+    // Apply Blind 10 scoring
+    if (state.blind10A) {
+      scoreA = booksA >= 10 ? 200 + (booksA - 10) : -200;
+    }
+    if (state.blind10B) {
+      scoreB = booksB >= 10 ? 200 + (booksB - 10) : -200;
+    }
+
+    state.bagsA += bagA;
+    state.bagsB += bagB;
+
+    // Apply bag penalties (only if not a blind bid)
+    if (!state.blind10A && state.bagsA >= 10) {
+      scoreA -= 100;
+      state.bagsA -= 10;
+    }
+    if (!state.blind10B && state.bagsB >= 10) {
+      scoreB -= 100;
+      state.bagsB -= 10;
+    }
     if (state.round === 1 && imm && (scoreA === -99999 || scoreB === -99999)) {
       const loser = scoreA === -99999 ? state.teamA : state.teamB;
       const winner = scoreA === -99999 ? state.teamB : state.teamA;
