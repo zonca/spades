@@ -2,7 +2,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 def test_round1_valid_hand(page: Page):
-    page.goto("file:///home/zonca/p/software/spades/spades_mobile_scorekeeper_single_page_app.html")
+    page.goto("file:///home/zonca/p/software/spades/index.html")
 
     # Enter team names and start the game
     page.fill("#teamA", "Team Alpha")
