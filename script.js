@@ -191,9 +191,17 @@ function scoreHand(
       return {
         scoreA: booksA < 4 ? -99999 : 10 * booksA,
         scoreB: booksB < 4 ? -99999 : 10 * booksB,
+        bagA: 0,
+        bagB: 0,
         imm: true,
       };
-    return { scoreA: 10 * booksA, scoreB: 10 * booksB, imm: false };
+    return {
+      scoreA: 10 * booksA,
+      scoreB: 10 * booksB,
+      bagA: 0,
+      bagB: 0,
+      imm: false,
+    };
   }
   let scoreA = booksA >= bidA ? 10 * bidA + (booksA - bidA) : -10 * bidA;
   let scoreB = booksB >= bidB ? 10 * bidB + (booksB - bidB) : -10 * bidB;
@@ -437,17 +445,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (state.blind10A) {
       scoreA = booksA >= 10 ? 200 + (booksA - 10) : -200;
     }
-    if (state.blind10B) {
-      scoreB = booksB >= 10 ? 200 + (booksB - 10) : -200;
-    }
-
     state.bagsA += bagA;
     state.bagsB += bagB;
 
+    console.log(
+      `Before bag penalty: scoreA=${scoreA}, bagsA=${state.bagsA}, blind10A=${state.blind10A}`,
+    );
     // Apply bag penalties (only if not a blind bid)
     if (!state.blind10A && state.bagsA >= 10) {
       scoreA -= 100;
       state.bagsA -= 10;
+      console.log(`After bag penalty: scoreA=${scoreA}, bagsA=${state.bagsA}`);
     }
     if (!state.blind10B && state.bagsB >= 10) {
       scoreB -= 100;

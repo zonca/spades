@@ -19,6 +19,7 @@ def start_game(page: Page, app_url: str) -> Callable[[str, str], Page]:
 
     def _start(team_a: str = "Team Alpha", team_b: str = "Team Beta") -> Page:
         page.goto(app_url)
+        page.on("console", lambda msg: print(f"Browser console: {msg.text}"))
         page.fill("#teamA", team_a)
         page.fill("#teamB", team_b)
         page.click("#startBtn")
