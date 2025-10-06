@@ -260,14 +260,24 @@
   function togglePhaseUI(){
     const bids = $('#bidsRow');
     const books = $('#booksRow');
-    if (state.round === 1){ if (bids) bids.style.display='none'; if (books) books.style.display=''; }
-    else if (state.phase === 'bids'){ if (bids) bids.style.display=''; if (books) books.style.display='none'; }
-    else { if (bids) bids.style.display=''; if (books) books.style.display=''; }
-    applyBlindLocks();
-    // Ensure all spinners are enabled when in books phase
-    if (state.phase === 'books') {
-      document.querySelectorAll('.spinner').forEach(sp => { sp.classList.remove('disabled'); });
+
+    if (state.round === 1) {
+      if (bids) bids.style.display = 'none';
+      if (books) books.style.display = '';
+    } else if (state.phase === 'bids') {
+      if (bids) bids.style.display = '';
+      if (books) books.style.display = 'none';
+    } else { // state.phase === 'books'
+      if (bids) bids.style.display = '';
+      if (books) books.style.display = '';
     }
+
+    applyBlindLocks();
+    updateBlindButtons();
+
+    // Ensure books spinners are never disabled
+    document.querySelectorAll('#booksRow .spinner').forEach(sp => { sp.classList.remove('disabled'); });
+
     updateUnbidNote();
     updateBooksSum();
   }
