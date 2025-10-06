@@ -258,6 +258,7 @@
   }
 
   function togglePhaseUI(){
+    console.log('togglePhaseUI called. state.phase:', state.phase, 'state.round:', state.round);
     const bids = $('#bidsRow');
     const books = $('#booksRow');
 
@@ -270,14 +271,15 @@
     } else { // state.phase === 'books'
       if (bids) bids.style.display = '';
       if (books) books.style.display = '';
+      // Ensure all spinners are enabled when in books phase
+      document.querySelectorAll('.spinner').forEach(sp => { sp.classList.remove('disabled'); });
     }
 
     applyBlindLocks();
     updateBlindButtons();
 
-    // Ensure books spinners are never disabled
+    // Ensure books spinners are never disabled (redundant but for safety)
     document.querySelectorAll('#booksRow .spinner').forEach(sp => { sp.classList.remove('disabled'); });
-
     updateUnbidNote();
     updateBooksSum();
   }
@@ -302,6 +304,7 @@
     if (state.bagsB >= 10){ scoreB -= 100; state.bagsB -= 10; }
     if (blindA){ scoreA += (booksA >= 10 ? 200 : -200); }
     if (blindB){ scoreB += (booksB >= 10 ? 200 : -200); }
+    console.log('scoreHand result:', {round, bidA, bidB, booksA, booksB, blindA, blindB, scoreA, scoreB});
     return {scoreA, scoreB, imm:false};
   }
 
