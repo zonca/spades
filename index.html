@@ -117,13 +117,18 @@
         <table id="handsTable">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Books A (bid)</th>
-              <th>Books B (bid)</th>
-              <th>Score A</th>
-              <th>Score B</th>
-              <th>Total A</th>
-              <th>Total B</th>
+              <th rowspan="2">#</th>
+              <th colspan="2">Books (bid)</th>
+              <th colspan="2">Score</th>
+              <th colspan="2">Total</th>
+            </tr>
+            <tr>
+              <th>A</th>
+              <th>B</th>
+              <th>A</th>
+              <th>B</th>
+              <th>A</th>
+              <th>B</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -259,6 +264,10 @@
     else if (state.phase === 'bids'){ if (bids) bids.style.display=''; if (books) books.style.display='none'; }
     else { if (bids) bids.style.display=''; if (books) books.style.display=''; }
     applyBlindLocks();
+    // Ensure all spinners are enabled when in books phase
+    if (state.phase === 'books') {
+      document.querySelectorAll('.spinner').forEach(sp => { sp.classList.remove('disabled'); });
+    }
     updateUnbidNote();
     updateBooksSum();
   }
