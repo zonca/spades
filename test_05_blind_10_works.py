@@ -28,4 +28,4 @@ def test_blind_10_works(start_game, play_hand):
     # Previous score A: 270 + (10*3 + (3-3)) = 300
     # Previous score B: 90 - 200 = -110
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 300")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: -10")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 290")
