@@ -113,13 +113,16 @@ function applyBlindLocks() {
   if (bUp) bUp.disabled = disableArrowsB;
   if (bDn) bDn.disabled = disableArrowsB;
 
-  // Visual lock: when bids are locked, hide arrows and gray the spinners
   const bidSpinners = document.querySelectorAll("#bidsRow .spinner");
   bidSpinners.forEach((sp) => {
+    const arrows = sp.querySelectorAll(".arrow button");
+    const value = sp.querySelector(".value");
     if (state.lockedBids) {
-      sp.classList.add("disabled");
+      arrows.forEach((arrow) => (arrow.style.display = "none"));
+      if (value) value.style.color = "#777"; // Grey color
     } else {
-      sp.classList.remove("disabled");
+      arrows.forEach((arrow) => (arrow.style.display = "")); // Restore default
+      if (value) value.style.color = ""; // Restore default
     }
   });
 }
