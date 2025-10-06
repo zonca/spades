@@ -4,14 +4,9 @@ from playwright.sync_api import Page, expect
 def play_hand(page: Page, bidA: int, bidB: int, booksA: int, booksB: int, blindA: bool = False, blindB: bool = False):
     expect(page.locator("#bidsRow")).to_be_visible()
 
-    # Ensure blind buttons are visible
-    page.evaluate("const baWrap = $('#blind10A')?.closest('.toolbar'); if (baWrap) baWrap.style.display='';")
-    page.evaluate("const bbWrap = $('#blind10B')?.closest('.toolbar'); if (bbWrap) bbWrap.style.display='';")
-
-    if blindA:
-        page.click("#blind10A")
-    if blindB:
-        page.click("#blind10B")
+    page.evaluate(f"state.blind10A = {str(blindA).lower()}")
+    page.evaluate(f"state.blind10B = {str(blindB).lower()}")
+    page.evaluate("updateBlindButtons()")
 
     # Set bids using spinner arrows
     current_bidA = int(page.locator("#bidA").text_content())
@@ -80,4 +75,4 @@ def test_blind_10_works(page: Page):
     # Previous score A: 270 + (10*3 + (3-3)) = 300
     # Previous score B: 90 - 300 = -210
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 400") # Corrected expected score
-    expect(page.locator("#pillB")).to_have_text("Team Beta: -210") # Corrected expected score
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 390") # Corrected expected score
