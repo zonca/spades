@@ -445,6 +445,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (state.blind10A) {
       scoreA = booksA >= 10 ? 200 + (booksA - 10) : -200;
     }
+    if (state.blind10B) {
+      scoreB = booksB >= 10 ? 200 + (booksB - 10) : -200;
+    }
     state.bagsA += bagA;
     state.bagsB += bagB;
 
