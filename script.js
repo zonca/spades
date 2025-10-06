@@ -311,7 +311,7 @@ function endGame(winnerName) {
   $("#bidsRow").style.display = "none";
   $("#booksRow").style.display = "none";
   $(".toolbar:has(#deleteLastBtn)").style.display = "none"; // Hide the toolbar with action buttons
-  $("#status").textContent = `<strong>${winnerName}</strong> wins!`;
+  $("#status").innerHTML = `<strong>${winnerName}</strong> wins!`;
   $("#winner").style.display = "none"; // Ensure the separate winner section is hidden
 }
 
