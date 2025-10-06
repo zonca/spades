@@ -267,6 +267,10 @@
     } else if (state.phase === 'bids') {
       if (bids) bids.style.display = '';
       if (books) books.style.display = 'none';
+      $('#bidsActions').style.display = ''; // Make bidsActions visible
+      $('#blind10A')?.closest('.toolbar').style.display=''; // Make blind buttons visible
+      $('#blind10B')?.closest('.toolbar').style.display=''; // Make blind buttons visible
+      $('#unbidNote').style.display=''; // Make unbid note visible
     } else { // state.phase === 'books'
       if (bids) bids.style.display = '';
       if (books) books.style.display = '';
