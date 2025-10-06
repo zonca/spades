@@ -26,8 +26,7 @@ def test_round1_immediate_loss(page: Page):
     page.click("#submitHandBtn")
 
     # Verify winner section is displayed
-    expect(page.locator("#winner")).to_be_visible()
-    expect(page.locator("#winnerText")).to_have_text("Team Beta wins!")
+    expect(page.locator("#winner")).not_to_be_visible()
+    expect(page.locator("#status")).to_have_text("<strong>Team Beta</strong> wins!")
 
-    # Verify status message
-    expect(page.locator("#status")).to_have_text("Team Alpha loses immediately.")
+

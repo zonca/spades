@@ -76,5 +76,5 @@ def test_match_end_win(page: Page):
     play_hand(page, 10, 3, 10, 3)
 
     # Verify winner section is displayed
-    expect(page.locator("#winner")).to_be_visible()
-    expect(page.locator("#winnerText")).to_have_text("Team Alpha wins!")
+    expect(page.locator("#winner")).not_to_be_visible()
+    expect(page.locator("#status")).to_have_text("<strong>Team Alpha</strong> wins!")
