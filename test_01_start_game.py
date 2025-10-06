@@ -1,8 +1,8 @@
-import pytest
 from playwright.sync_api import Page, expect
 
-def test_start_game_with_team_names(page: Page):
-    page.goto("file:///home/zonca/p/software/spades/index.html")
+
+def test_start_game_with_team_names(page: Page, app_url: str):
+    page.goto(app_url)
 
     # Fill in team names
     page.fill("#teamA", "Team Playwright")
