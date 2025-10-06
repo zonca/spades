@@ -23,7 +23,7 @@ def test_blind_10_works(start_game, play_hand):
 
     # Round 3: Team Beta bids Blind 10, makes 3 books (fails)
     expect(page.locator("#pillRound")).to_have_text("Round 3")
-    play_hand(3, 10, 3, 3, blind_b=True)
+    play_hand(3, 10, 3, 10, blind_b=True)
     # Score for Blind 10 (B) making 3 books: -200 points
     # Previous score A: 270 + (10*3 + (3-3)) = 300
     # Previous score B: 90 - 300 = -210

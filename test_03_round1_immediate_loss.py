@@ -22,4 +22,4 @@ def test_round1_immediate_loss(start_game):
 
     # Verify winner section is displayed
     expect(page.locator("#winner")).not_to_be_visible()
-    expect(page.locator("#status")).to_have_text("<strong>Team Beta</strong> wins!")
+    expect(page.locator("#status")).to_have_text("Team Beta wins!")
