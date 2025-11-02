@@ -19,7 +19,7 @@ def test_nil_success_awards_bonus(start_game):
     page.locator("[data-for='bidB'][data-arrow='up']").click()  # 6 -> 7
     page.locator("[data-for='bidB'][data-arrow='up']").click()  # 7 -> 8
     page.click("#nilA")
-    expect(page.locator("#nilA")).to_have_text("Nil (A) ✓")
+    expect(page.locator("#nilA")).to_have_text("Nil ✓")
 
     page.click("#lockBidsBtn")
 
@@ -39,7 +39,7 @@ def test_nil_success_awards_bonus(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("145")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 170")
     expect(page.locator("#pillB")).to_have_text("Team Beta: 145")
-    expect(page.locator("#nilA")).to_have_text("Nil (A)")
+    expect(page.locator("#nilA")).to_have_text("Nil")
 
 
 def test_nil_failure_applies_penalty(start_game):
@@ -49,7 +49,7 @@ def test_nil_failure_applies_penalty(start_game):
     # Round 2 bidding: Team Beta declares Nil, bids stay 6 / 7.
     page.locator("[data-for='bidB'][data-arrow='up']").click()  # 6 -> 7
     page.click("#nilB")
-    expect(page.locator("#nilB")).to_have_text("Nil (B) ✓")
+    expect(page.locator("#nilB")).to_have_text("Nil ✓")
 
     page.click("#lockBidsBtn")
 
@@ -67,4 +67,4 @@ def test_nil_failure_applies_penalty(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("-32")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 10")
     expect(page.locator("#pillB")).to_have_text("Team Beta: -32")
-    expect(page.locator("#nilB")).to_have_text("Nil (B)")
+    expect(page.locator("#nilB")).to_have_text("Nil")

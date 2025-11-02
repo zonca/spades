@@ -30,11 +30,131 @@ function createInitialState() {
 const state = createInitialState();
 let pendingSnapshot = null;
 let isHydrating = false;
+let confettiCleanup = null;
 
 const $ = (s) => document.querySelector(s);
 
 function getSpinnerText(id) {
   return document.getElementById(id)?.textContent || "";
+}
+
+function stopConfetti() {
+  if (typeof confettiCleanup === "function") {
+    confettiCleanup();
+    confettiCleanup = null;
+  }
+}
+
+function startConfetti() {
+  stopConfetti();
+  if (typeof window === "undefined") return;
+  const canvas = document.getElementById("winnerConfetti");
+  if (!(canvas instanceof HTMLCanvasElement)) return;
+  const parent = canvas.parentElement;
+  if (!parent) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const dpr = window.devicePixelRatio || 1;
+  let width = 0;
+  let height = 0;
+
+  function resize() {
+    const rect = parent.getBoundingClientRect();
+    width = rect.width || parent.clientWidth || window.innerWidth;
+    height = rect.height || parent.clientHeight || window.innerHeight;
+    canvas.width = Math.max(1, Math.floor(width * dpr));
+    canvas.height = Math.max(1, Math.floor(height * dpr));
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+
+  const colors = ["#2563eb", "#0ea5e9", "#22c55e", "#f59e0b", "#ec4899", "#6366f1"];
+  const particleCount = 140;
+
+  const particles = Array.from({ length: particleCount }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * -height,
+    size: 4 + Math.random() * 6,
+    velocityX: (Math.random() - 0.5) * 1.4,
+    velocityY: 2 + Math.random() * 3,
+    rotation: Math.random() * 360,
+    rotationSpeed: (Math.random() - 0.5) * 8,
+    sway: 0.0015 + Math.random() * 0.003,
+    color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+
+  let running = true;
+  let frameId = null;
+  let fadeTimeout = null;
+  const duration = 5000;
+
+  canvas.classList.add("active");
+
+  function step(now) {
+    if (!running) return;
+    ctx.clearRect(0, 0, width, height);
+    particles.forEach((p) => {
+      p.x += p.velocityX + Math.sin(now * p.sway) * 0.6;
+      p.y += p.velocityY;
+      p.rotation += p.rotationSpeed;
+
+      if (p.y > height + p.size) {
+        p.y = -10;
+        p.x = Math.random() * width;
+      }
+      if (p.x < -30) p.x = width + 30;
+      if (p.x > width + 30) p.x = -30;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.1);
+      ctx.restore();
+    });
+    frameId = window.requestAnimationFrame(step);
+  }
+
+  frameId = window.requestAnimationFrame(step);
+
+  const endTimeout = window.setTimeout(() => stop(true), duration);
+
+  function finalize() {
+    window.removeEventListener("resize", resize);
+    if (frameId !== null) {
+      window.cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+    if (fadeTimeout !== null) {
+      window.clearTimeout(fadeTimeout);
+      fadeTimeout = null;
+    }
+    window.clearTimeout(endTimeout);
+    ctx.clearRect(0, 0, width, height);
+    confettiCleanup = null;
+  }
+
+  function stop(withFade) {
+    if (!running) {
+      finalize();
+      return;
+    }
+    running = false;
+    canvas.classList.remove("active");
+    if (withFade) {
+      fadeTimeout = window.setTimeout(finalize, 350);
+    } else {
+      finalize();
+    }
+  }
+
+  confettiCleanup = () => stop(false);
 }
 
 function snapshotForStorage() {
@@ -91,6 +211,7 @@ function clearStoredState() {
 }
 
 function restartGame() {
+  stopConfetti();
   clearStoredState();
   if (typeof window !== "undefined" && typeof window.location !== "undefined") {
     window.location.reload();
@@ -104,16 +225,18 @@ function applyEndGameUI(winnerName) {
   if (actions) actions.style.display = "none";
   const message = `${winnerName} wins!`;
   const status = $("#status");
-  if (status) status.textContent = message;
+  if (status) status.textContent = "";
   const winnerSection = $("#winner");
   if (winnerSection) winnerSection.style.display = "";
   const winnerText = $("#winnerText");
   if (winnerText) winnerText.textContent = message;
+  startConfetti();
   updateNewGameButtons();
 }
 
 function applySnapshot(snapshot, { hideSetup = true } = {}) {
   if (!snapshot || !snapshot.state) return;
+  stopConfetti();
   isHydrating = true;
   const fresh = createInitialState();
   const savedState = {
@@ -147,13 +270,13 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   if (state.lockedBids) {
     const lock = $("#bidsActions");
     if (lock) lock.style.display = "none";
-    const baWrap = $("#blind10A")?.closest(".toolbar");
+    const baWrap = $("#blind10A")?.closest(".spinner-actions");
     if (baWrap) baWrap.style.display = "none";
-    const bbWrap = $("#blind10B")?.closest(".toolbar");
+    const bbWrap = $("#blind10B")?.closest(".spinner-actions");
     if (bbWrap) bbWrap.style.display = "none";
-    const naWrap = $("#nilA")?.closest(".toolbar");
+    const naWrap = $("#nilA")?.closest(".spinner-actions");
     if (naWrap) naWrap.style.display = "none";
-    const nbWrap = $("#nilB")?.closest(".toolbar");
+    const nbWrap = $("#nilB")?.closest(".spinner-actions");
     if (nbWrap) nbWrap.style.display = "none";
     const note = $("#unbidNote");
     if (note) note.style.display = "none";
@@ -181,10 +304,27 @@ function clamp(v, min, max) {
 }
 
 function updatePills() {
+  const formatDisplayName = (name, fallback, suffix) => {
+    const trimmed = (name ?? "").trim();
+    if (!trimmed) return fallback;
+    const lower = trimmed.toLowerCase();
+    if (lower === fallback.toLowerCase()) return fallback;
+    if (lower.endsWith(suffix.toLowerCase())) return trimmed;
+    return `${trimmed} ${suffix}`;
+  };
+  const baseName = (name, fallback) => {
+    const trimmed = (name ?? "").trim();
+    return trimmed || fallback;
+  };
+  const displayNameA = formatDisplayName(state.teamA, "Team A", "(A)");
+  const displayNameB = formatDisplayName(state.teamB, "Team B", "(B)");
+  const baseNameA = baseName(state.teamA, "Team A");
+  const baseNameB = baseName(state.teamB, "Team B");
+
   const nameA = $("#scoreNameA");
-  if (nameA) nameA.textContent = state.teamA;
+  if (nameA) nameA.textContent = displayNameA;
   const nameB = $("#scoreNameB");
-  if (nameB) nameB.textContent = state.teamB;
+  if (nameB) nameB.textContent = displayNameB;
   const round = $("#pillRound");
   if (round) round.textContent = `Round ${state.round}`;
   const pointsA = $("#scorePointsA");
@@ -193,18 +333,18 @@ function updatePills() {
   if (pointsB) pointsB.textContent = state.totalB;
 
   const bidLabelA = $("#bidLabelA");
-  if (bidLabelA) bidLabelA.textContent = state.teamA;
+  if (bidLabelA) bidLabelA.textContent = displayNameA;
   const bidLabelB = $("#bidLabelB");
-  if (bidLabelB) bidLabelB.textContent = state.teamB;
+  if (bidLabelB) bidLabelB.textContent = displayNameB;
   const booksLabelA = $("#booksLabelA");
-  if (booksLabelA) booksLabelA.textContent = state.teamA;
+  if (booksLabelA) booksLabelA.textContent = displayNameA;
   const booksLabelB = $("#booksLabelB");
-  if (booksLabelB) booksLabelB.textContent = state.teamB;
+  if (booksLabelB) booksLabelB.textContent = displayNameB;
 
   const pillA = $("#pillA");
-  if (pillA) pillA.textContent = `${state.teamA}: ${state.totalA}`;
+  if (pillA) pillA.textContent = `${baseNameA}: ${state.totalA}`;
   const pillB = $("#pillB");
-  if (pillB) pillB.textContent = `${state.teamB}: ${state.totalB}`;
+  if (pillB) pillB.textContent = `${baseNameB}: ${state.totalB}`;
 }
 
 function updateBooksSum() {
@@ -311,10 +451,10 @@ function togglePhaseUI() {
   const bids = $("#bidsRow");
   const books = $("#booksRow");
   const bidsActions = $("#bidsActions");
-  const baWrap = $("#blind10A")?.closest(".toolbar");
-  const bbWrap = $("#blind10B")?.closest(".toolbar");
-  const naWrap = $("#nilA")?.closest(".toolbar");
-  const nbWrap = $("#nilB")?.closest(".toolbar");
+  const baWrap = $("#blind10A")?.closest(".spinner-actions");
+  const bbWrap = $("#blind10B")?.closest(".spinner-actions");
+  const naWrap = $("#nilA")?.closest(".spinner-actions");
+  const nbWrap = $("#nilB")?.closest(".spinner-actions");
   const note = $("#unbidNote");
 
   [baWrap, bbWrap, naWrap, nbWrap].forEach((wrap) => {
@@ -364,12 +504,12 @@ function updateBlindButtons() {
   if (a) {
     a.disabled = disable;
     a.classList.toggle("button-outline", !state.blind10A);
-    a.textContent = state.blind10A ? "Blind 10 (A) ✓" : "Blind 10 (A)";
+    a.textContent = state.blind10A ? "Blind 10 ✓" : "Blind 10";
   }
   if (b) {
     b.disabled = disable;
     b.classList.toggle("button-outline", !state.blind10B);
-    b.textContent = state.blind10B ? "Blind 10 (B) ✓" : "Blind 10 (B)";
+    b.textContent = state.blind10B ? "Blind 10 ✓" : "Blind 10";
   }
 }
 
@@ -380,18 +520,27 @@ function updateNilButtons() {
   if (a) {
     a.disabled = disable;
     a.classList.toggle("button-outline", !state.nilA);
-    a.textContent = state.nilA ? "Nil (A) ✓" : "Nil (A)";
+    a.textContent = state.nilA ? "Nil ✓" : "Nil";
   }
   if (b) {
     b.disabled = disable;
     b.classList.toggle("button-outline", !state.nilB);
-    b.textContent = state.nilB ? "Nil (B) ✓" : "Nil (B)";
+    b.textContent = state.nilB ? "Nil ✓" : "Nil";
   }
 }
 
 function updateNewGameButtons() {
   const main = $("#newGameBtnMain");
   if (main) main.style.display = state.gameOver ? "" : "none";
+  updateDeleteButton();
+}
+
+function updateDeleteButton() {
+  const deleteBtn = $("#deleteLastBtn");
+  if (!deleteBtn) return;
+  const hasHands = state.hands.length > 0;
+  deleteBtn.textContent = hasHands ? "Delete Last Hand" : "New Game";
+  deleteBtn.classList.toggle("button-outline", hasHands);
 }
 
 function scoreHand(
@@ -441,6 +590,7 @@ function pushHand(h) {
   state.hands.push(h);
   renderHands();
   updatePills();
+  updateDeleteButton();
   saveState();
 }
 
@@ -464,13 +614,15 @@ function renderHands() {
         <td>${runningB}</td>`;
     tbody.appendChild(tr);
   });
+  updateDeleteButton();
 }
 
 function deleteLastHand() {
   if (state.hands.length === 0) {
-    $("#status").textContent = "No hands to delete.";
+    restartGame();
     return;
   }
+  stopConfetti();
   state.hands.pop();
   state.totalA = 0;
   state.totalB = 0;
@@ -614,6 +766,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Start game
   $("#startBtn").onclick = () => {
+    stopConfetti();
     const fresh = createInitialState();
     fresh.started = true;
     fresh.teamA = $("#teamA").value || "Team A";
@@ -647,13 +800,13 @@ document.addEventListener("DOMContentLoaded", () => {
     state.lockedBids = true;
     const lock = $("#bidsActions");
     if (lock) lock.style.display = "none";
-    const baWrap = $("#blind10A")?.closest(".toolbar");
+    const baWrap = $("#blind10A")?.closest(".spinner-actions");
     if (baWrap) baWrap.style.display = "none";
-    const bbWrap = $("#blind10B")?.closest(".toolbar");
+    const bbWrap = $("#blind10B")?.closest(".spinner-actions");
     if (bbWrap) bbWrap.style.display = "none";
-    const naWrap = $("#nilA")?.closest(".toolbar");
+    const naWrap = $("#nilA")?.closest(".spinner-actions");
     if (naWrap) naWrap.style.display = "none";
-    const nbWrap = $("#nilB")?.closest(".toolbar");
+    const nbWrap = $("#nilB")?.closest(".spinner-actions");
     if (nbWrap) nbWrap.style.display = "none";
     const note = $("#unbidNote");
     if (note) note.style.display = "none";

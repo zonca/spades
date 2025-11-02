@@ -23,7 +23,7 @@ def test_nil_sets_bid_to_zero_and_restores_previous_value(start_game):
 
     # Enable Nil – bid should drop to 0 and arrows should disable.
     page.click("#nilA")
-    expect(page.locator("#nilA")).to_have_text("Nil (A) ✓")
+    expect(page.locator("#nilA")).to_have_text("Nil ✓")
     expect(page.locator("#bidA")).to_have_text("0")
     expect(page.locator("#unbidNote")).to_have_text("Unbid books left: 7")
     expect(page.locator("[data-for='bidA'][data-arrow='down']")).to_be_disabled()
@@ -31,7 +31,7 @@ def test_nil_sets_bid_to_zero_and_restores_previous_value(start_game):
 
     # Disable Nil – bid should restore to previous (min 4) and controls re-enable.
     page.click("#nilA")
-    expect(page.locator("#nilA")).to_have_text("Nil (A)")
+    expect(page.locator("#nilA")).to_have_text("Nil")
     expect(page.locator("#bidA")).to_have_text("5")
     expect(page.locator("#unbidNote")).to_have_text("Unbid books left: 2")
     expect(page.locator("[data-for='bidA'][data-arrow='down']")).not_to_be_disabled()

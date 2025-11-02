@@ -45,7 +45,9 @@ def test_win_shows_table(start_game, play_hand):
     expect(page.locator("#handsTable")).to_be_visible()
 
     # Assert that the winner message is displayed within the game section
-    expect(page.locator("#status")).to_have_text("Team Alpha wins!")
+    expect(page.locator("#winnerText")).to_have_text("Team Alpha wins!")
+    expect(page.locator("#status")).to_have_text("")
+    expect(page.locator("#winner .winner-actions")).to_be_visible()
 
     # Assert that input controls are hidden
     expect(page.locator("#bidsRow")).not_to_be_visible()

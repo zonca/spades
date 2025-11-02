@@ -24,3 +24,4 @@ def test_round1_immediate_loss(start_game):
     expect(page.locator("#winner")).to_be_visible()
     expect(page.locator("#winnerText")).to_have_text("Team Beta wins!")
     expect(page.locator("#newGameBtn")).to_be_visible()
+    expect(page.locator("#status")).to_have_text("")
