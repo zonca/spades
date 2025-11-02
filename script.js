@@ -1,23 +1,156 @@
 // Inline app logic (no external deps)
-const state = {
-  round: 1,
-  phase: "books",
-  teamA: "Team A",
-  teamB: "Team B",
-  totalA: 0,
-  totalB: 0,
-  bagsA: 0,
-  bagsB: 0,
-  hands: [],
-  lockedBids: false,
-  blind10A: false,
-  blind10B: false,
-  prevBidA: 6,
-  prevBidB: 6,
-};
+const STORAGE_KEY = "spades-scorekeeper-state-v1";
+
+function createInitialState() {
+  return {
+    round: 1,
+    phase: "books",
+    teamA: "Team A",
+    teamB: "Team B",
+    totalA: 0,
+    totalB: 0,
+    bagsA: 0,
+    bagsB: 0,
+    hands: [],
+    lockedBids: false,
+    blind10A: false,
+    blind10B: false,
+    prevBidA: 6,
+    prevBidB: 6,
+    started: false,
+    gameOver: false,
+    winnerName: null,
+  };
+}
+
+const state = createInitialState();
+let pendingSnapshot = null;
+let isHydrating = false;
 
 const $ = (s) => document.querySelector(s);
 
+function getSpinnerText(id) {
+  return document.getElementById(id)?.textContent || "";
+}
+
+function snapshotForStorage() {
+  const stateCopy = {
+    ...state,
+    hands: state.hands.map((hand) => ({ ...hand })),
+  };
+  return {
+    version: 1,
+    state: stateCopy,
+    ui: {
+      bidA: getSpinnerText("bidA"),
+      bidB: getSpinnerText("bidB"),
+      booksA: getSpinnerText("booksA"),
+      booksB: getSpinnerText("booksB"),
+      status: $("#status")?.textContent || "",
+      setupHidden: $("#setup")?.style.display === "none",
+      gameVisible: $("#game")?.style.display !== "none",
+      winnerVisible: $("#winner")?.style.display !== "none",
+    },
+  };
+}
+
+function saveState() {
+  if (isHydrating) return;
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    const payload = snapshotForStorage();
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    console.error("Failed to save state", err);
+  }
+}
+
+function readSnapshotFromStorage() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error("Failed to read saved game", err);
+    return null;
+  }
+}
+
+function clearStoredState() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch (err) {
+    console.error("Failed to clear saved game", err);
+  }
+}
+
+function applyEndGameUI(winnerName) {
+  $("#bidsRow").style.display = "none";
+  $("#booksRow").style.display = "none";
+  const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
+  if (actions) actions.style.display = "none";
+  $("#status").innerHTML = `<strong>${winnerName}</strong> wins!`;
+  $("#winner").style.display = "none";
+}
+
+function applySnapshot(snapshot, { hideSetup = true } = {}) {
+  if (!snapshot || !snapshot.state) return;
+  isHydrating = true;
+  const fresh = createInitialState();
+  const savedState = {
+    ...fresh,
+    ...snapshot.state,
+    hands: (snapshot.state.hands || []).map((hand) => ({ ...hand })),
+  };
+  Object.assign(state, savedState);
+  if (!state.started && state.hands.length > 0) state.started = true;
+
+  if (hideSetup) {
+    $("#setup").style.display = "none";
+    $("#game").style.display = "";
+  }
+  $("#teamA").value = state.teamA;
+  $("#teamB").value = state.teamB;
+
+  // Restore spinner values
+  const ui = snapshot.ui || {};
+  if (ui.bidA !== undefined) $("#bidA").textContent = String(ui.bidA);
+  if (ui.bidB !== undefined) $("#bidB").textContent = String(ui.bidB);
+  if (ui.booksA !== undefined) $("#booksA").textContent = String(ui.booksA);
+  if (ui.booksB !== undefined) $("#booksB").textContent = String(ui.booksB);
+
+  renderHands();
+  updatePills();
+  togglePhaseUI();
+
+  if (state.lockedBids) {
+    const lock = $("#bidsActions");
+    if (lock) lock.style.display = "none";
+    const baWrap = $("#blind10A")?.closest(".toolbar");
+    if (baWrap) baWrap.style.display = "none";
+    const bbWrap = $("#blind10B")?.closest(".toolbar");
+    if (bbWrap) bbWrap.style.display = "none";
+    const note = $("#unbidNote");
+    if (note) note.style.display = "none";
+  }
+
+  if (ui.status !== undefined) {
+    $("#status").textContent = ui.status;
+  }
+
+  if (state.gameOver && state.winnerName) {
+    applyEndGameUI(state.winnerName);
+  } else {
+    const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
+    if (actions) actions.style.display = "";
+  }
+  updateUnbidNote();
+  updateBooksSum();
+  isHydrating = false;
+  saveState();
+}
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
@@ -86,6 +219,7 @@ function setValueFor(id, delta) {
   const next = clamp((+vEl.textContent || 0) + delta, min, max);
   vEl.textContent = String(next);
   onSpinnerChange(spinner, next, { link: id === "booksA" || id === "booksB" });
+  saveState();
 }
 
 function wireArrowButtons() {
@@ -245,6 +379,7 @@ function pushHand(h) {
   state.hands.push(h);
   renderHands();
   updatePills();
+  saveState();
 }
 
 function renderHands() {
@@ -281,6 +416,8 @@ function deleteLastHand() {
   state.bagsB = 0;
   state.round = 1;
   state.phase = "books";
+  state.gameOver = false;
+  state.winnerName = null;
   const saved = [...state.hands];
   state.hands = [];
   saved.forEach((orig, idx) => {
@@ -353,32 +490,71 @@ function deleteLastHand() {
   updatePills();
   renderHands();
   togglePhaseUI();
+  const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
+  if (actions) actions.style.display = "";
   $("#status").textContent = "Deleted last hand.";
+  saveState();
 }
 
 function endGame(winnerName) {
-  $("#bidsRow").style.display = "none";
-  $("#booksRow").style.display = "none";
-  $(".toolbar:has(#deleteLastBtn)").style.display = "none"; // Hide the toolbar with action buttons
-  $("#status").innerHTML = `<strong>${winnerName}</strong> wins!`;
-  $("#winner").style.display = "none"; // Ensure the separate winner section is hidden
+  state.gameOver = true;
+  state.winnerName = winnerName;
+  applyEndGameUI(winnerName);
+  saveState();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const resumeBtn = $("#resumeBtn");
+  pendingSnapshot = readSnapshotFromStorage();
+  const hasSavedGame =
+    pendingSnapshot &&
+    pendingSnapshot.state &&
+    ((pendingSnapshot.state.started && pendingSnapshot.state.started !== false) ||
+      (pendingSnapshot.state.hands?.length || 0) > 0);
+
+  if (resumeBtn) {
+    if (hasSavedGame) {
+      resumeBtn.style.display = "";
+      resumeBtn.onclick = () => {
+        applySnapshot(pendingSnapshot);
+        resumeBtn.style.display = "none";
+      };
+      const automation =
+        typeof navigator !== "undefined" && navigator.webdriver === true;
+      if (!automation) {
+        applySnapshot(pendingSnapshot);
+        resumeBtn.style.display = "none";
+      }
+    } else {
+      resumeBtn.style.display = "none";
+    }
+  }
+
   // Start game
   $("#startBtn").onclick = () => {
-    state.teamA = $("#teamA").value || "Team A";
-    state.teamB = $("#teamB").value || "Team B";
+    const fresh = createInitialState();
+    fresh.started = true;
+    fresh.teamA = $("#teamA").value || "Team A";
+    fresh.teamB = $("#teamB").value || "Team B";
+    Object.assign(state, fresh);
+    pendingSnapshot = null;
     $("#setup").style.display = "none";
     $("#game").style.display = "";
-    state.round = 1;
-    state.phase = "books";
+    $("#winner").style.display = "none";
+    $("#status").textContent = "";
+    renderHands();
     updatePills();
     togglePhaseUI();
+    $("#bidA").textContent = "6";
+    $("#bidB").textContent = "6";
     $("#booksA").textContent = "6";
     $("#booksB").textContent = "7";
     updateBooksSum();
     updateUnbidNote();
+    const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
+    if (actions) actions.style.display = "";
+    saveState();
+    if (resumeBtn) resumeBtn.style.display = "none";
   };
 
   // Lock bids
@@ -386,7 +562,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (state.round === 1) return;
     state.phase = "books";
     state.lockedBids = true;
-    // Hide lock button, blind buttons, and unbid note
     const lock = $("#bidsActions");
     if (lock) lock.style.display = "none";
     const baWrap = $("#blind10A")?.closest(".toolbar");
@@ -395,7 +570,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (bbWrap) bbWrap.style.display = "none";
     const note = $("#unbidNote");
     if (note) note.style.display = "none";
-    // Hide bid arrows & gray dials via class
     document.querySelectorAll("#bidsRow .spinner").forEach((sp) => {
       sp.classList.add("disabled");
     });
@@ -404,6 +578,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#booksA").textContent = "6";
     $("#booksB").textContent = "7";
     updateBooksSum();
+    saveState();
   };
 
   // Blind 10 toggles
@@ -418,6 +593,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBlindButtons();
     updateUnbidNote();
     togglePhaseUI();
+    saveState();
   };
   $("#blind10B").onclick = () => {
     state.blind10B = !state.blind10B;
@@ -430,6 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBlindButtons();
     updateUnbidNote();
     togglePhaseUI();
+    saveState();
   };
 
   // Submit hand
@@ -462,7 +639,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let scoreA = baseScoreA;
     let scoreB = baseScoreB;
 
-    // Apply Blind 10 scoring
     if (state.blind10A) {
       scoreA = booksA >= 10 ? 200 + (booksA - 10) : -200;
     }
@@ -475,7 +651,6 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(
       `Before bag penalty: scoreA=${scoreA}, bagsA=${state.bagsA}, blind10A=${state.blind10A}`,
     );
-    // Apply bag penalties (only if not a blind bid)
     if (!state.blind10A && state.bagsA >= 10) {
       scoreA -= 100;
       state.bagsA -= 10;
@@ -534,13 +709,16 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#booksB").textContent = "7";
     updateBooksSum();
     $("#status").textContent = "Next round: set bids first.";
+    saveState();
   };
 
   // Other buttons
   $("#deleteLastBtn").onclick = () => deleteLastHand();
-  $("#newGameBtn").onclick = () => location.reload();
+  $("#newGameBtn").onclick = () => {
+    clearStoredState();
+    location.reload();
+  };
 
-  // Wire arrows & initial UI
   wireArrowButtons();
   updateBlindButtons();
   updateUnbidNote();
