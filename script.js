@@ -23,9 +23,30 @@ function clamp(v, min, max) {
 }
 
 function updatePills() {
-  $("#pillA").textContent = `${state.teamA}: ${state.totalA}`;
-  $("#pillB").textContent = `${state.teamB}: ${state.totalB}`;
-  $("#pillRound").textContent = `Round ${state.round}`;
+  const nameA = $("#scoreNameA");
+  if (nameA) nameA.textContent = state.teamA;
+  const nameB = $("#scoreNameB");
+  if (nameB) nameB.textContent = state.teamB;
+  const round = $("#pillRound");
+  if (round) round.textContent = `Round ${state.round}`;
+  const pointsA = $("#scorePointsA");
+  if (pointsA) pointsA.textContent = state.totalA;
+  const pointsB = $("#scorePointsB");
+  if (pointsB) pointsB.textContent = state.totalB;
+
+  const bidLabelA = $("#bidLabelA");
+  if (bidLabelA) bidLabelA.textContent = state.teamA;
+  const bidLabelB = $("#bidLabelB");
+  if (bidLabelB) bidLabelB.textContent = state.teamB;
+  const booksLabelA = $("#booksLabelA");
+  if (booksLabelA) booksLabelA.textContent = state.teamA;
+  const booksLabelB = $("#booksLabelB");
+  if (booksLabelB) booksLabelB.textContent = state.teamB;
+
+  const pillA = $("#pillA");
+  if (pillA) pillA.textContent = `${state.teamA}: ${state.totalA}`;
+  const pillB = $("#pillB");
+  if (pillB) pillB.textContent = `${state.teamB}: ${state.totalB}`;
 }
 
 function updateBooksSum() {
