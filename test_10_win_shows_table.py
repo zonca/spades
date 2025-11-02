@@ -11,35 +11,35 @@ def test_win_shows_table(start_game, play_hand):
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 70")
     expect(page.locator("#pillB")).to_have_text("Team Beta: 60")
 
-    # Round 2: Team Alpha gets 100, Team Beta gets 30 (total A: 170, B: 90)
+    # Round 2: Team Alpha gets 100, Team Beta loses 40 (total A: 170, B: 20)
     expect(page.locator("#pillRound")).to_have_text("Round 2")
-    play_hand(10, 3, 10, 3)
+    play_hand(10, 4, 10, 3)
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 170")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 90")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 20")
 
-    # Round 3: Team Alpha gets 100, Team Beta gets 30 (total A: 270, B: 120)
+    # Round 3: Team Alpha gets 100, Team Beta loses 40 (total A: 270, B: -20)
     expect(page.locator("#pillRound")).to_have_text("Round 3")
-    play_hand(10, 3, 10, 3)
+    play_hand(10, 4, 10, 3)
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 270")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 120")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -20")
 
-    # Round 4: Team Alpha gets 100, Team Beta gets 30 (total A: 370, B: 150)
+    # Round 4: Team Alpha gets 100, Team Beta loses 40 (total A: 370, B: -60)
     expect(page.locator("#pillRound")).to_have_text("Round 4")
-    play_hand(10, 3, 10, 3)
+    play_hand(10, 4, 10, 3)
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 370")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 150")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -60")
 
-    # Round 5: Team Alpha gets 100, Team Beta gets 30 (total A: 470, B: 180)
+    # Round 5: Team Alpha gets 100, Team Beta loses 40 (total A: 470, B: -100)
     expect(page.locator("#pillRound")).to_have_text("Round 5")
-    play_hand(10, 3, 10, 3)
+    play_hand(10, 4, 10, 3)
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 470")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 180")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -100")
 
-    # Round 6: Team Alpha gets 100, Team Beta gets 30 (total A: 570, B: 210) - Team Alpha wins
+    # Round 6: Team Alpha gets 100, Team Beta loses 40 (total A: 570, B: -140) - Team Alpha wins
     expect(page.locator("#pillRound")).to_have_text("Round 6")
-    play_hand(10, 3, 10, 3)
+    play_hand(10, 4, 10, 3)
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 570")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 210")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -140")
 
     # Assert that the hands table is visible
     expect(page.locator("#handsTable")).to_be_visible()

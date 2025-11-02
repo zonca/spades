@@ -13,19 +13,19 @@ def test_blind_10_works(start_game, play_hand):
 
     # Round 2: Team Alpha bids Blind 10, makes 10 books
     expect(page.locator("#pillRound")).to_have_text("Round 2")
-    play_hand(10, 3, 10, 3, blind_a=True)
+    play_hand(10, 4, 10, 3, blind_a=True)
     # Score for Blind 10 (A) making 10 books: 200 points
     # Previous score A: 70, B: 60
     # New score A: 70 + 200 = 270
-    # New score B: 60 + (10*3 + (3-3)) = 90
+    # New score B: 60 - 40 = 20
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 270")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 90")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 20")
 
-    # Round 3: Team Beta bids Blind 10, makes 3 books (fails)
+    # Round 3: Team Beta bids Blind 10, makes 10 books
     expect(page.locator("#pillRound")).to_have_text("Round 3")
-    play_hand(3, 10, 3, 10, blind_b=True)
-    # Score for Blind 10 (B) making 3 books: -200 points
-    # Previous score A: 270 + (10*3 + (3-3)) = 300
-    # Previous score B: 90 - 200 = -110
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 300")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 290")
+    play_hand(4, 10, 3, 10, blind_b=True)
+    # Score for Blind 10 (B) making 10 books: 200 points
+    # Previous score A: 270 - 40 = 230
+    # Previous score B: 20 + 200 = 220
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 230")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 220")

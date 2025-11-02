@@ -33,11 +33,11 @@ def test_nil_success_awards_bonus(start_game):
 
     expect(page.locator("#pillRound")).to_have_text("Round 3")
     # Verify Nil bonus applied.
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(4)")).to_have_text("50")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(4)")).to_have_text("100")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("85")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("120")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("170")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("145")
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 120")
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 170")
     expect(page.locator("#pillB")).to_have_text("Team Beta: 145")
     expect(page.locator("#nilA")).to_have_text("Nil (A)")
 
@@ -62,9 +62,9 @@ def test_nil_failure_applies_penalty(start_game):
 
     expect(page.locator("#pillRound")).to_have_text("Round 3")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(4)")).to_have_text("-60")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("-29")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("-92")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("10")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("31")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("-32")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 10")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 31")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -32")
     expect(page.locator("#nilB")).to_have_text("Nil (B)")

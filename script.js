@@ -19,6 +19,8 @@ function createInitialState() {
     nilB: false,
     prevBidA: 6,
     prevBidB: 6,
+    nilPrevBidA: 6,
+    nilPrevBidB: 6,
     started: false,
     gameOver: false,
     winnerName: null,
@@ -100,8 +102,13 @@ function applyEndGameUI(winnerName) {
   $("#booksRow").style.display = "none";
   const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "none";
-  $("#status").innerHTML = `<strong>${winnerName}</strong> wins!`;
-  $("#winner").style.display = "none";
+  const message = `${winnerName} wins!`;
+  const status = $("#status");
+  if (status) status.textContent = message;
+  const winnerSection = $("#winner");
+  if (winnerSection) winnerSection.style.display = "";
+  const winnerText = $("#winnerText");
+  if (winnerText) winnerText.textContent = message;
   updateNewGameButtons();
 }
 
@@ -114,6 +121,8 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
     ...snapshot.state,
     hands: (snapshot.state.hands || []).map((hand) => ({ ...hand })),
   };
+  if (savedState.nilPrevBidA === undefined) savedState.nilPrevBidA = 6;
+  if (savedState.nilPrevBidB === undefined) savedState.nilPrevBidB = 6;
   Object.assign(state, savedState);
   if (!state.started && state.hands.length > 0) state.started = true;
 
@@ -276,11 +285,11 @@ function applyBlindLocks() {
   }
 
   const disableArrows =
-    state.blind10A || state.phase === "books" || state.lockedBids;
+    state.blind10A || state.nilA || state.phase === "books" || state.lockedBids;
   if (aUp) aUp.disabled = disableArrows;
   if (aDn) aDn.disabled = disableArrows;
   const disableArrowsB =
-    state.blind10B || state.phase === "books" || state.lockedBids;
+    state.blind10B || state.nilB || state.phase === "books" || state.lockedBids;
   if (bUp) bUp.disabled = disableArrowsB;
   if (bDn) bDn.disabled = disableArrowsB;
 
@@ -473,6 +482,8 @@ function deleteLastHand() {
   state.winnerName = null;
   state.nilA = false;
   state.nilB = false;
+  state.nilPrevBidA = 6;
+  state.nilPrevBidB = 6;
   const saved = [...state.hands];
   state.hands = [];
   saved.forEach((orig, idx) => {
@@ -695,25 +706,53 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#nilA").onclick = () => {
     if (state.phase !== "bids" || state.lockedBids) return;
     state.nilA = !state.nilA;
-    if (state.nilA && state.blind10A) {
-      state.blind10A = false;
-      $("#bidA").textContent = String(state.prevBidA || 6);
+    const bidDisplay = $("#bidA");
+    if (state.nilA) {
+      if (state.blind10A) {
+        state.blind10A = false;
+        if (bidDisplay)
+          bidDisplay.textContent = String(Math.max(state.prevBidA || 6, 4));
+      }
+      state.nilPrevBidA = +(bidDisplay?.textContent || 6);
+      if (bidDisplay) bidDisplay.textContent = "0";
+    } else {
+      const restored = Math.max(
+        state.nilPrevBidA ?? state.prevBidA ?? 6,
+        4,
+      );
+      if (bidDisplay) bidDisplay.textContent = String(restored);
+      state.nilPrevBidA = restored;
     }
     applyBlindLocks();
     updateNilButtons();
     updateBlindButtons();
+    updateUnbidNote();
     saveState();
   };
   $("#nilB").onclick = () => {
     if (state.phase !== "bids" || state.lockedBids) return;
     state.nilB = !state.nilB;
-    if (state.nilB && state.blind10B) {
-      state.blind10B = false;
-      $("#bidB").textContent = String(state.prevBidB || 6);
+    const bidDisplay = $("#bidB");
+    if (state.nilB) {
+      if (state.blind10B) {
+        state.blind10B = false;
+        if (bidDisplay)
+          bidDisplay.textContent = String(Math.max(state.prevBidB || 6, 4));
+      }
+      state.nilPrevBidB = +(bidDisplay?.textContent || 6);
+      if (bidDisplay) bidDisplay.textContent = "0";
+    } else {
+      const restored = Math.max(
+        state.nilPrevBidB ?? state.prevBidB ?? 6,
+        4,
+      );
+      if (bidDisplay) bidDisplay.textContent = String(restored);
+      state.nilPrevBidB = restored;
     }
     applyBlindLocks();
     updateNilButtons();
     updateBlindButtons();
+    updateUnbidNote();
     saveState();
   };
 

@@ -29,12 +29,19 @@
     .note { font-size:18px; color:#333; margin-top:6px; font-weight:700; }
     .table-scroll { overflow-x:auto; }
     #winnerText {
-      font-size: 5rem;
+      font-size: clamp(4rem, 12vw, 8rem);
       color: #FF5733; /* A vibrant orange-red */
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
       text-align: center;
       margin-top: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 32px;
+      line-height: 1.05;
+    }
+    #winner {
+      text-align: center;
+    }
+    #winner .toolbar {
+      justify-content: center;
     }
   </style>
 </head>
@@ -84,7 +91,7 @@
         <p><strong>Bids</strong></p>
         <div class="row">
           <div class="column">
-            <div class="spinner" data-target="bidA" data-min="0" data-max="13">
+            <div class="spinner" data-target="bidA" data-min="4" data-max="13">
               <div class="spinner-label" id="bidLabelA">Team A</div>
               <div class="arrow"><button type="button" data-arrow="up" data-for="bidA">▲</button></div>
               <div class="value" id="bidA">6</div>
@@ -96,7 +103,7 @@
             </div>
           </div>
           <div class="column">
-            <div class="spinner" data-target="bidB" data-min="0" data-max="13">
+            <div class="spinner" data-target="bidB" data-min="4" data-max="13">
               <div class="spinner-label" id="bidLabelB">Team B</div>
               <div class="arrow"><button type="button" data-arrow="up" data-for="bidB">▲</button></div>
               <div class="value" id="bidB">6</div>
