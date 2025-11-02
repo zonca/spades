@@ -29,7 +29,7 @@
     .note { font-size:18px; color:#333; margin-top:6px; font-weight:700; }
     .table-scroll { overflow-x:auto; }
     #winnerText {
-      font-size: 3em;
+      font-size: 5rem;
       color: #FF5733; /* A vibrant orange-red */
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
       text-align: center;
@@ -92,6 +92,7 @@
             </div>
             <div class="toolbar" style="margin-top:8px;">
               <button id="blind10A" class="button button-outline">Blind 10 (A)</button>
+              <button id="nilA" class="button button-outline">Nil (A)</button>
             </div>
           </div>
           <div class="column">
@@ -103,6 +104,7 @@
             </div>
             <div class="toolbar" style="margin-top:8px;">
               <button id="blind10B" class="button button-outline">Blind 10 (B)</button>
+              <button id="nilB" class="button button-outline">Nil (B)</button>
             </div>
           </div>
         </div>
@@ -135,6 +137,7 @@
       </div>
 
       <div class="toolbar">
+        <button id="newGameBtnMain" class="button button-outline" style="display:none;">New Game</button>
         <button id="deleteLastBtn" class="button button-outline">Delete Last Hand</button>
         <button id="submitHandBtn" class="button">Submit Hand</button>
       </div>

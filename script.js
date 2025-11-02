@@ -15,6 +15,8 @@ function createInitialState() {
     lockedBids: false,
     blind10A: false,
     blind10B: false,
+    nilA: false,
+    nilB: false,
     prevBidA: 6,
     prevBidB: 6,
     started: false,
@@ -86,6 +88,13 @@ function clearStoredState() {
   }
 }
 
+function restartGame() {
+  clearStoredState();
+  if (typeof window !== "undefined" && typeof window.location !== "undefined") {
+    window.location.reload();
+  }
+}
+
 function applyEndGameUI(winnerName) {
   $("#bidsRow").style.display = "none";
   $("#booksRow").style.display = "none";
@@ -93,6 +102,7 @@ function applyEndGameUI(winnerName) {
   if (actions) actions.style.display = "none";
   $("#status").innerHTML = `<strong>${winnerName}</strong> wins!`;
   $("#winner").style.display = "none";
+  updateNewGameButtons();
 }
 
 function applySnapshot(snapshot, { hideSetup = true } = {}) {
@@ -132,6 +142,10 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
     if (baWrap) baWrap.style.display = "none";
     const bbWrap = $("#blind10B")?.closest(".toolbar");
     if (bbWrap) bbWrap.style.display = "none";
+    const naWrap = $("#nilA")?.closest(".toolbar");
+    if (naWrap) naWrap.style.display = "none";
+    const nbWrap = $("#nilB")?.closest(".toolbar");
+    if (nbWrap) nbWrap.style.display = "none";
     const note = $("#unbidNote");
     if (note) note.style.display = "none";
   }
@@ -146,6 +160,8 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
     const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
     if (actions) actions.style.display = "";
   }
+  updateNewGameButtons();
+  updateNilButtons();
   updateUnbidNote();
   updateBooksSum();
   isHydrating = false;
@@ -285,6 +301,16 @@ function applyBlindLocks() {
 function togglePhaseUI() {
   const bids = $("#bidsRow");
   const books = $("#booksRow");
+  const bidsActions = $("#bidsActions");
+  const baWrap = $("#blind10A")?.closest(".toolbar");
+  const bbWrap = $("#blind10B")?.closest(".toolbar");
+  const naWrap = $("#nilA")?.closest(".toolbar");
+  const nbWrap = $("#nilB")?.closest(".toolbar");
+  const note = $("#unbidNote");
+
+  [baWrap, bbWrap, naWrap, nbWrap].forEach((wrap) => {
+    if (wrap) wrap.style.display = "none";
+  });
 
   if (state.round === 1) {
     if (bids) bids.style.display = "none";
@@ -292,12 +318,12 @@ function togglePhaseUI() {
   } else if (state.phase === "bids") {
     if (bids) bids.style.display = "";
     if (books) books.style.display = "none";
-    $("#bidsActions").style.display = ""; // Make bidsActions visible
-    const baWrap = $("#blind10A")?.closest(".toolbar");
-    if (baWrap) baWrap.style.display = ""; // Make blind buttons visible
-    const bbWrap = $("#blind10B")?.closest(".toolbar");
-    if (bbWrap) bbWrap.style.display = ""; // Make blind buttons visible
-    $("#unbidNote").style.display = ""; // Make unbid note visible
+    if (bidsActions) bidsActions.style.display = "";
+    if (baWrap) baWrap.style.display = "";
+    if (bbWrap) bbWrap.style.display = "";
+    if (naWrap) naWrap.style.display = "";
+    if (nbWrap) nbWrap.style.display = "";
+    if (note) note.style.display = ""; // Make unbid note visible
   } else {
     // state.phase === 'books'
     if (bids) bids.style.display = "";
@@ -308,8 +334,11 @@ function togglePhaseUI() {
     });
   }
 
+  if (note && state.phase !== "bids") note.style.display = "none";
+
   applyBlindLocks();
   updateBlindButtons();
+  updateNilButtons();
 
   // Ensure books spinners are never disabled (redundant but for safety)
   document.querySelectorAll("#booksRow .spinner").forEach((sp) => {
@@ -322,14 +351,38 @@ function togglePhaseUI() {
 function updateBlindButtons() {
   const a = $("#blind10A");
   const b = $("#blind10B");
+  const disable = state.phase !== "bids" || state.lockedBids;
   if (a) {
+    a.disabled = disable;
     a.classList.toggle("button-outline", !state.blind10A);
     a.textContent = state.blind10A ? "Blind 10 (A) ✓" : "Blind 10 (A)";
   }
   if (b) {
+    b.disabled = disable;
     b.classList.toggle("button-outline", !state.blind10B);
     b.textContent = state.blind10B ? "Blind 10 (B) ✓" : "Blind 10 (B)";
   }
+}
+
+function updateNilButtons() {
+  const disable = state.phase !== "bids" || state.lockedBids;
+  const a = $("#nilA");
+  const b = $("#nilB");
+  if (a) {
+    a.disabled = disable;
+    a.classList.toggle("button-outline", !state.nilA);
+    a.textContent = state.nilA ? "Nil (A) ✓" : "Nil (A)";
+  }
+  if (b) {
+    b.disabled = disable;
+    b.classList.toggle("button-outline", !state.nilB);
+    b.textContent = state.nilB ? "Nil (B) ✓" : "Nil (B)";
+  }
+}
+
+function updateNewGameButtons() {
+  const main = $("#newGameBtnMain");
+  if (main) main.style.display = state.gameOver ? "" : "none";
 }
 
 function scoreHand(
@@ -418,6 +471,8 @@ function deleteLastHand() {
   state.phase = "books";
   state.gameOver = false;
   state.winnerName = null;
+  state.nilA = false;
+  state.nilB = false;
   const saved = [...state.hands];
   state.hands = [];
   saved.forEach((orig, idx) => {
@@ -464,10 +519,21 @@ function deleteLastHand() {
       state.bagsB -= 10;
     }
 
+    const immediateLoss =
+      r === 1 && imm && (scoreA === -99999 || scoreB === -99999);
+    if (!immediateLoss) {
+      if (!!orig.nilA) {
+        scoreA += +orig.booksA === 0 ? 100 : -100;
+      }
+      if (!!orig.nilB) {
+        scoreB += +orig.booksB === 0 ? 100 : -100;
+      }
+    }
+
     const recA =
-      r === 1 && imm && (scoreA === -99999 || scoreB === -99999) ? 0 : scoreA;
+      immediateLoss && (scoreA === -99999 || scoreB === -99999) ? 0 : scoreA;
     const recB =
-      r === 1 && imm && (scoreA === -99999 || scoreB === -99999) ? 0 : scoreB;
+      immediateLoss && (scoreA === -99999 || scoreB === -99999) ? 0 : scoreB;
     state.totalA += recA;
     state.totalB += recB;
     state.hands.push({
@@ -480,6 +546,8 @@ function deleteLastHand() {
       scoreB: recB,
       blindA: orig.blindA,
       blindB: orig.blindB,
+      nilA: orig.nilA,
+      nilB: orig.nilB,
     });
   });
   state.round = saved.length + 1;
@@ -487,9 +555,12 @@ function deleteLastHand() {
   state.lockedBids = false;
   state.blind10A = false;
   state.blind10B = false;
+  state.nilA = false;
+  state.nilB = false;
   updatePills();
   renderHands();
   togglePhaseUI();
+  updateNewGameButtons();
   const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "";
   $("#status").textContent = "Deleted last hand.";
@@ -545,6 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderHands();
     updatePills();
     togglePhaseUI();
+    updateNewGameButtons();
     $("#bidA").textContent = "6";
     $("#bidB").textContent = "6";
     $("#booksA").textContent = "6";
@@ -568,6 +640,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (baWrap) baWrap.style.display = "none";
     const bbWrap = $("#blind10B")?.closest(".toolbar");
     if (bbWrap) bbWrap.style.display = "none";
+    const naWrap = $("#nilA")?.closest(".toolbar");
+    if (naWrap) naWrap.style.display = "none";
+    const nbWrap = $("#nilB")?.closest(".toolbar");
+    if (nbWrap) nbWrap.style.display = "none";
     const note = $("#unbidNote");
     if (note) note.style.display = "none";
     document.querySelectorAll("#bidsRow .spinner").forEach((sp) => {
@@ -585,12 +661,15 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#blind10A").onclick = () => {
     state.blind10A = !state.blind10A;
     if (state.blind10A) {
+      state.nilA = false;
       state.prevBidA = +$("#bidA").textContent || 6;
       $("#bidA").textContent = "10";
     } else {
       $("#bidA").textContent = String(state.prevBidA || 6);
     }
+    applyBlindLocks();
     updateBlindButtons();
+    updateNilButtons();
     updateUnbidNote();
     togglePhaseUI();
     saveState();
@@ -598,14 +677,43 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#blind10B").onclick = () => {
     state.blind10B = !state.blind10B;
     if (state.blind10B) {
+      state.nilB = false;
       state.prevBidB = +$("#bidB").textContent || 6;
       $("#bidB").textContent = "10";
     } else {
       $("#bidB").textContent = String(state.prevBidB || 6);
     }
+    applyBlindLocks();
     updateBlindButtons();
+    updateNilButtons();
     updateUnbidNote();
     togglePhaseUI();
+    saveState();
+  };
+
+  // Nil toggles
+  $("#nilA").onclick = () => {
+    if (state.phase !== "bids" || state.lockedBids) return;
+    state.nilA = !state.nilA;
+    if (state.nilA && state.blind10A) {
+      state.blind10A = false;
+      $("#bidA").textContent = String(state.prevBidA || 6);
+    }
+    applyBlindLocks();
+    updateNilButtons();
+    updateBlindButtons();
+    saveState();
+  };
+  $("#nilB").onclick = () => {
+    if (state.phase !== "bids" || state.lockedBids) return;
+    state.nilB = !state.nilB;
+    if (state.nilB && state.blind10B) {
+      state.blind10B = false;
+      $("#bidB").textContent = String(state.prevBidB || 6);
+    }
+    applyBlindLocks();
+    updateNilButtons();
+    updateBlindButtons();
     saveState();
   };
 
@@ -660,9 +768,13 @@ document.addEventListener("DOMContentLoaded", () => {
       scoreB -= 100;
       state.bagsB -= 10;
     }
-    if (state.round === 1 && imm && (scoreA === -99999 || scoreB === -99999)) {
+    const immediateLoss =
+      state.round === 1 && imm && (scoreA === -99999 || scoreB === -99999);
+    if (immediateLoss) {
       const loser = scoreA === -99999 ? state.teamA : state.teamB;
       const winner = scoreA === -99999 ? state.teamB : state.teamA;
+      const priorNilA = state.nilA;
+      const priorNilB = state.nilB;
       pushHand({
         round: state.round,
         bidA: "-",
@@ -671,13 +783,28 @@ document.addEventListener("DOMContentLoaded", () => {
         booksB,
         scoreA: scoreA === -99999 ? 0 : scoreA,
         scoreB: scoreB === -99999 ? 0 : scoreB,
+        blindA: state.blind10A,
+        blindB: state.blind10B,
+        nilA: priorNilA,
+        nilB: priorNilB,
       });
+      state.nilA = false;
+      state.nilB = false;
+      updateNilButtons();
       $("#status").textContent = `${loser} loses immediately.`;
       endGame(winner);
       return;
     }
+    if (state.nilA) {
+      scoreA += booksA === 0 ? 100 : -100;
+    }
+    if (state.nilB) {
+      scoreB += booksB === 0 ? 100 : -100;
+    }
     state.totalA += scoreA;
     state.totalB += scoreB;
+    const priorNilA = state.nilA;
+    const priorNilB = state.nilB;
     pushHand({
       round: state.round,
       bidA: state.round === 1 ? "-" : bidA,
@@ -688,11 +815,16 @@ document.addEventListener("DOMContentLoaded", () => {
       scoreB,
       blindA: state.blind10A,
       blindB: state.blind10B,
+      nilA: priorNilA,
+      nilB: priorNilB,
     });
     state.blind10A = false;
     state.blind10B = false;
+    state.nilA = false;
+    state.nilB = false;
     state.lockedBids = false;
     updateBlindButtons();
+    updateNilButtons();
     const winner = checkWin();
     if (winner) {
       endGame(winner);
@@ -714,13 +846,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Other buttons
   $("#deleteLastBtn").onclick = () => deleteLastHand();
-  $("#newGameBtn").onclick = () => {
-    clearStoredState();
-    location.reload();
-  };
+  const newGameBtn = $("#newGameBtn");
+  if (newGameBtn) newGameBtn.onclick = restartGame;
+  const newGameBtnMain = $("#newGameBtnMain");
+  if (newGameBtnMain) newGameBtnMain.onclick = restartGame;
 
   wireArrowButtons();
   updateBlindButtons();
+  updateNilButtons();
+  updateNewGameButtons();
   updateUnbidNote();
   updateBooksSum();
 });
