@@ -26,6 +26,10 @@ uv run pytest
 
 The application is a single-page web application. To run it, simply open `index.html` in a web browser. There is no separate server-side component to start.
 
+## Deployment
+
+The production build is served at https://zonca.github.io/spades/.
+
 # Development Conventions
 
 *   **Frontend:** The user interface and game logic are implemented using HTML, CSS, and JavaScript within `index.html`.
