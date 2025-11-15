@@ -611,7 +611,7 @@ function updateChart() {
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-  if (!ctx || typeof rough === "undefined") return;
+  if (!ctx) return;
 
   // Calculate cumulative scores
   const dataA = [0];
@@ -631,9 +631,7 @@ function updateChart() {
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(dpr, dpr);
-  const rc = rough.canvas(canvas);
 
   // Chart dimensions
   const padding = { top: 40, right: 60, bottom: 40, left: 60 };
@@ -654,31 +652,51 @@ function updateChart() {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, rect.width, rect.height);
 
-  // Draw grid using Rough.js so it feels hand-drawn
+  // Draw grid with xkcd style (slightly wavy)
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+
+  // Draw horizontal grid lines
   const numHLines = 5;
-  const gridOptions = { stroke: "#e5e7eb", strokeWidth: 1, roughness: 1.6, bowing: 0.8 };
   for (let i = 0; i <= numHLines; i++) {
     const y = padding.top + (i / numHLines) * chartHeight;
-    rc.line(padding.left, y, padding.left + chartWidth, y, gridOptions);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    for (let x = padding.left; x <= padding.left + chartWidth; x += 10) {
+      const wobble = Math.sin(x * 0.1 + i) * 0.5;
+      ctx.lineTo(x, y + wobble);
+    }
+    ctx.stroke();
   }
 
-  const rawVLines = Math.min(dataA.length - 1, 10);
-  const numVLines = Math.max(1, rawVLines);
+  // Draw vertical grid lines
+  const numVLines = Math.min(dataA.length - 1, 10);
   for (let i = 0; i <= numVLines; i++) {
-    const ratio = numVLines === 0 ? 0 : i / numVLines;
-    const x = padding.left + ratio * chartWidth;
-    rc.line(x, padding.top, x, padding.top + chartHeight, gridOptions);
+    const x = padding.left + (i / numVLines) * chartWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    for (let y = padding.top; y <= padding.top + chartHeight; y += 10) {
+      const wobble = Math.cos(y * 0.1 + i) * 0.5;
+      ctx.lineTo(x + wobble, y);
+    }
+    ctx.stroke();
   }
 
-  // Draw 500-point line
+  // Draw 500-point line (with dashed xkcd style)
   if (maxY >= 500 && minY <= 500) {
     const y500 = getY(500);
-    rc.line(padding.left, y500, padding.left + chartWidth, y500, {
-      stroke: "#16a34a",
-      strokeWidth: 2,
-      roughness: 0.8,
-      bowing: 0.5,
-    });
+    ctx.strokeStyle = "#16a34a";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y500);
+    for (let x = padding.left; x <= padding.left + chartWidth; x += 10) {
+      const wobble = Math.sin(x * 0.15) * 0.8;
+      ctx.lineTo(x, y500 + wobble);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
 
     // Label for 500 line
     ctx.fillStyle = "#16a34a";
@@ -688,15 +706,17 @@ function updateChart() {
   }
 
   // Draw Team A line (blue)
-  const pointsA = dataA.map((value, i) => [getX(i), getY(value)]);
-  if (pointsA.length >= 2) {
-    rc.linearPath(pointsA, {
-      stroke: "#2563eb",
-      strokeWidth: 3,
-      roughness: 1,
-      bowing: 1,
-    });
-  }
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  dataA.forEach((value, i) => {
+    const x = getX(i);
+    const y = getY(value);
+    const wobble = Math.sin(i * 0.3) * 1.2;
+    if (i === 0) ctx.moveTo(x + wobble, y);
+    else ctx.lineTo(x + wobble, y);
+  });
+  ctx.stroke();
 
   // Draw Team A points
   ctx.fillStyle = "#2563eb";
@@ -709,15 +729,17 @@ function updateChart() {
   });
 
   // Draw Team B line (red)
-  const pointsB = dataB.map((value, i) => [getX(i), getY(value)]);
-  if (pointsB.length >= 2) {
-    rc.linearPath(pointsB, {
-      stroke: "#dc2626",
-      strokeWidth: 3,
-      roughness: 1,
-      bowing: 1,
-    });
-  }
+  ctx.strokeStyle = "#dc2626";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  dataB.forEach((value, i) => {
+    const x = getX(i);
+    const y = getY(value);
+    const wobble = Math.cos(i * 0.3) * 1.2;
+    if (i === 0) ctx.moveTo(x + wobble, y);
+    else ctx.lineTo(x + wobble, y);
+  });
+  ctx.stroke();
 
   // Draw Team B points
   ctx.fillStyle = "#dc2626";
@@ -730,15 +752,13 @@ function updateChart() {
   });
 
   // Draw axes
-  const axisOptions = { stroke: "#333", strokeWidth: 2, roughness: 0.4, bowing: 0.2 };
-  rc.line(padding.left, padding.top, padding.left, padding.top + chartHeight, axisOptions);
-  rc.line(
-    padding.left,
-    padding.top + chartHeight,
-    padding.left + chartWidth,
-    padding.top + chartHeight,
-    axisOptions,
-  );
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top);
+  ctx.lineTo(padding.left, padding.top + chartHeight);
+  ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+  ctx.stroke();
 
   // Y-axis labels
   ctx.fillStyle = "#333";
@@ -767,12 +787,8 @@ function updateChart() {
   const legendY = padding.top + 10;
 
   // Team A legend
-  rc.line(legendX, legendY + 1, legendX + 20, legendY + 1, {
-    stroke: "#2563eb",
-    strokeWidth: 3,
-    roughness: 1,
-    bowing: 0.5,
-  });
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(legendX, legendY, 20, 3);
   ctx.fillStyle = "#333";
   ctx.font = "bold 14px 'Comic Sans MS', cursive, sans-serif";
   ctx.textAlign = "left";
@@ -780,12 +796,8 @@ function updateChart() {
   ctx.fillText(state.teamA || "Team A", legendX + 25, legendY + 1);
 
   // Team B legend
-  rc.line(legendX, legendY + 21, legendX + 20, legendY + 21, {
-    stroke: "#dc2626",
-    strokeWidth: 3,
-    roughness: 1,
-    bowing: 0.5,
-  });
+  ctx.fillStyle = "#dc2626";
+  ctx.fillRect(legendX, legendY + 20, 20, 3);
   ctx.fillStyle = "#333";
   ctx.fillText(state.teamB || "Team B", legendX + 25, legendY + 21);
 }
@@ -1368,4 +1380,11 @@ document.addEventListener("DOMContentLoaded", () => {
   updateNewGameButtons();
   updateUnbidNote();
   updateBooksSum();
+});
+
+// Add window resize handler to redraw chart
+window.addEventListener("resize", () => {
+  if (state.hands.length > 0) {
+    updateChart();
+  }
 });
