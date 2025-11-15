@@ -331,6 +331,11 @@ function updatePills() {
   if (pointsA) pointsA.textContent = state.totalA;
   const pointsB = $("#scorePointsB");
   if (pointsB) pointsB.textContent = state.totalB;
+  
+  const bagsA = $("#scoreBagsA");
+  if (bagsA) bagsA.textContent = state.bagsA > 0 ? `(${state.bagsA})` : "";
+  const bagsB = $("#scoreBagsB");
+  if (bagsB) bagsB.textContent = state.bagsB > 0 ? `(${state.bagsB})` : "";
 
   const bidLabelA = $("#bidLabelA");
   if (bidLabelA) bidLabelA.textContent = displayNameA;
@@ -342,9 +347,15 @@ function updatePills() {
   if (booksLabelB) booksLabelB.textContent = displayNameB;
 
   const pillA = $("#pillA");
-  if (pillA) pillA.textContent = `${baseNameA}: ${state.totalA}`;
+  if (pillA) {
+    const bagsDisplayA = state.bagsA > 0 ? ` (${state.bagsA})` : "";
+    pillA.textContent = `${baseNameA}: ${state.totalA}${bagsDisplayA}`;
+  }
   const pillB = $("#pillB");
-  if (pillB) pillB.textContent = `${baseNameB}: ${state.totalB}`;
+  if (pillB) {
+    const bagsDisplayB = state.bagsB > 0 ? ` (${state.bagsB})` : "";
+    pillB.textContent = `${baseNameB}: ${state.totalB}${bagsDisplayB}`;
+  }
 }
 
 function updateBooksSum() {
@@ -569,8 +580,8 @@ function scoreHand(
       imm: false,
     };
   }
-  let scoreA = booksA >= bidA ? 10 * bidA + (booksA - bidA) : -10 * bidA;
-  let scoreB = booksB >= bidB ? 10 * bidB + (booksB - bidB) : -10 * bidB;
+  let scoreA = booksA >= bidA ? 10 * bidA : -10 * bidA;
+  let scoreB = booksB >= bidB ? 10 * bidB : -10 * bidB;
 
   const bagA = booksA > bidA ? booksA - bidA : 0;
   const bagB = booksB > bidB ? booksB - bidB : 0;
@@ -598,20 +609,30 @@ function renderHands() {
   const tbody = $("#handsTable tbody");
   tbody.innerHTML = "";
   let runningA = 0,
-    runningB = 0;
+    runningB = 0,
+    runningBagsA = 0,
+    runningBagsB = 0;
   state.hands.forEach((h, i) => {
     runningA += h.scoreA;
     runningB += h.scoreB;
+    if (h.runningBagsA !== undefined) {
+      runningBagsA = h.runningBagsA;
+    }
+    if (h.runningBagsB !== undefined) {
+      runningBagsB = h.runningBagsB;
+    }
     const bidA = h.round === 1 ? "-" : h.bidA;
     const bidB = h.round === 1 ? "-" : h.bidB;
+    const bagsDisplayA = runningBagsA > 0 ? ` (${runningBagsA})` : "";
+    const bagsDisplayB = runningBagsB > 0 ? ` (${runningBagsB})` : "";
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td>
         <td>${h.booksA} (${bidA})</td>
         <td>${h.booksB} (${bidB})</td>
         <td>${h.scoreA}</td>
         <td>${h.scoreB}</td>
-        <td>${runningA}</td>
-        <td>${runningB}</td>`;
+        <td>${runningA}${bagsDisplayA}</td>
+        <td>${runningB}${bagsDisplayB}</td>`;
     tbody.appendChild(tr);
   });
   updateDeleteButton();
@@ -663,10 +684,10 @@ function deleteLastHand() {
 
     // Apply Blind 10 scoring
     if (!!orig.blindA) {
-      scoreA = +orig.booksA >= 10 ? 200 + (+orig.booksA - 10) : -200;
+      scoreA = +orig.booksA >= 10 ? 200 : -200;
     }
     if (!!orig.blindB) {
-      scoreB = +orig.booksB >= 10 ? 200 + (+orig.booksB - 10) : -200;
+      scoreB = +orig.booksB >= 10 ? 200 : -200;
     }
 
     state.bagsA += bagA;
@@ -711,6 +732,8 @@ function deleteLastHand() {
       blindB: orig.blindB,
       nilA: orig.nilA,
       nilB: orig.nilB,
+      runningBagsA: state.bagsA,
+      runningBagsB: state.bagsB,
     });
   });
   state.round = saved.length + 1;
@@ -940,10 +963,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let scoreB = baseScoreB;
 
     if (state.blind10A) {
-      scoreA = booksA >= 10 ? 200 + (booksA - 10) : -200;
+      scoreA = booksA >= 10 ? 200 : -200;
     }
     if (state.blind10B) {
-      scoreB = booksB >= 10 ? 200 + (booksB - 10) : -200;
+      scoreB = booksB >= 10 ? 200 : -200;
     }
     state.bagsA += bagA;
     state.bagsB += bagB;
@@ -979,6 +1002,8 @@ document.addEventListener("DOMContentLoaded", () => {
         blindB: state.blind10B,
         nilA: priorNilA,
         nilB: priorNilB,
+        runningBagsA: state.bagsA,
+        runningBagsB: state.bagsB,
       });
       state.nilA = false;
       state.nilB = false;
@@ -1009,6 +1034,8 @@ document.addEventListener("DOMContentLoaded", () => {
       blindB: state.blind10B,
       nilA: priorNilA,
       nilB: priorNilB,
+      runningBagsA: state.bagsA,
+      runningBagsB: state.bagsB,
     });
     state.blind10A = false;
     state.blind10B = false;

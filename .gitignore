@@ -1,4 +1,4 @@
 node_modules/
-debug_screenshot_before_click.png
 __pycache__/
 *.pyc
+*.png
