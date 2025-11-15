@@ -217,6 +217,27 @@
         <button id="newGameBtn" class="button button-outline">New Game</button>
       </div>
     </section>
+
+    <section id="charts" class="card" style="display:none;">
+      <h5>Score Chart</h5>
+      <div style="position: relative; height: 300px; margin-bottom: 20px;">
+        <canvas id="scoreChart"></canvas>
+      </div>
+    </section>
+
+    <section id="stats" class="card" style="display:none;">
+      <h5>Game Statistics</h5>
+      <div class="row">
+        <div class="column">
+          <h6 id="statsTeamAName">Team A</h6>
+          <div id="statsTeamA"></div>
+        </div>
+        <div class="column">
+          <h6 id="statsTeamBName">Team B</h6>
+          <div id="statsTeamB"></div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script src="script.js"></script>
