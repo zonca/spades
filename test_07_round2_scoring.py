@@ -27,7 +27,7 @@ def test_round2_scoring(start_game, play_hand):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("-70")
 
     # Verify total scores in pills
-    # Total A: 70 + 60 = 130
-    # Total B: 60 - 70 = -10
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 130")
+    # Total A: 70 + 60 = 130 with 1 sandbag
+    # Total B: 60 - 70 = -10 with 0 sandbags
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 130 (1)")
     expect(page.locator("#pillB")).to_have_text("Team Beta: -10")

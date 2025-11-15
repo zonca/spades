@@ -14,22 +14,22 @@ def test_sandbag_penalty(start_game, play_hand):
     # Round 2: Team A bids 6, makes 10 books (4 bags). Team B bids 6, makes 3 books (-60 points).
     expect(page.locator("#pillRound")).to_have_text("Round 2")
     play_hand(6, 6, 10, 3)
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 130")  # 70 + 10*6 = 70 + 60 = 130
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 0")    # 60 + (-10*6) = 60 - 60 = 0
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 130 (4)")  # 70 + 10*6 = 130, 4 bags
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 0")    # 60 + (-10*6) = 0, 0 bags
 
     # Round 3: Team A bids 6, makes 10 books (4 bags). Team B bids 6, makes 3 books (-60 points).
     expect(page.locator("#pillRound")).to_have_text("Round 3")
     play_hand(6, 6, 10, 3)
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 190")  # 130 + 10*6 = 130 + 60 = 190
-    expect(page.locator("#pillB")).to_have_text("Team Beta: -60")   # 0 + (-10*6) = 0 - 60 = -60
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 190 (8)")  # 130 + 10*6 = 190, 8 bags
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -60")   # 0 + (-10*6) = -60, 0 bags
 
     # Round 4: Team A bids 6, makes 8 books (2 bags). Total bags A: 8 + 2 = 10. Penalty applies.
     # Team B bids 6, makes 5 books (-60 points).
     expect(page.locator("#pillRound")).to_have_text("Round 4")
     play_hand(6, 6, 8, 5)
     # Score A for hand: 10*6 = 60. Bags A: 8 + 2 = 10. Penalty: -100. New bags A: 0.
-    # Total A: 190 + 60 - 100 = 150
+    # Total A: 190 + 60 - 100 = 150, bags reset to 0
     # Score B for hand: (-10*6) = -60. Bags B: 0 + 0 = 0. No penalty.
     # Total B: -60 - 60 = -120
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 150")
+    expect(page.locator("#pillA")).to_have_text("Team Alpha: 150")  # Bags reset to 0 after penalty
     expect(page.locator("#pillB")).to_have_text("Team Beta: -120")

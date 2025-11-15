@@ -40,7 +40,7 @@ def test_nil_success_awards_bonus(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("170")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("140 (5)")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 170")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 140")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 140 (5)")
     expect(page.locator("#nilA")).to_have_text("Nil")
 
 
@@ -70,5 +70,5 @@ def test_nil_failure_applies_penalty(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("10")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("-40 (8)")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 10")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: -40")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -40 (8)")
     expect(page.locator("#nilB")).to_have_text("Nil")

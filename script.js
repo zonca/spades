@@ -347,9 +347,15 @@ function updatePills() {
   if (booksLabelB) booksLabelB.textContent = displayNameB;
 
   const pillA = $("#pillA");
-  if (pillA) pillA.textContent = `${baseNameA}: ${state.totalA}`;
+  if (pillA) {
+    const bagsDisplayA = state.bagsA > 0 ? ` (${state.bagsA})` : "";
+    pillA.textContent = `${baseNameA}: ${state.totalA}${bagsDisplayA}`;
+  }
   const pillB = $("#pillB");
-  if (pillB) pillB.textContent = `${baseNameB}: ${state.totalB}`;
+  if (pillB) {
+    const bagsDisplayB = state.bagsB > 0 ? ` (${state.bagsB})` : "";
+    pillB.textContent = `${baseNameB}: ${state.totalB}${bagsDisplayB}`;
+  }
 }
 
 function updateBooksSum() {
