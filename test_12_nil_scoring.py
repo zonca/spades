@@ -33,12 +33,14 @@ def test_nil_success_awards_bonus(start_game):
 
     expect(page.locator("#pillRound")).to_have_text("Round 3")
     # Verify Nil bonus applied.
+    # Team A: Nil made (0 books) = +100
+    # Team B: bid 8, made 13 = 10*8 = 80 (5 sandbags not counted in score)
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(4)")).to_have_text("100")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("85")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("80")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("170")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("145 (5)")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("140 (5)")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 170")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 145")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: 140")
     expect(page.locator("#nilA")).to_have_text("Nil")
 
 
@@ -61,10 +63,12 @@ def test_nil_failure_applies_penalty(start_game):
     page.click("#submitHandBtn")
 
     expect(page.locator("#pillRound")).to_have_text("Round 3")
+    # Team A: bid 6, made 5 = -10*6 = -60
+    # Team B: bid Nil (0), made 8 = -100 for failing Nil, plus 8 sandbags (not counted in score)
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(4)")).to_have_text("-60")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("-92")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("-100")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("10")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("-32 (8)")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("-40 (8)")
     expect(page.locator("#pillA")).to_have_text("Team Alpha: 10")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: -32")
+    expect(page.locator("#pillB")).to_have_text("Team Beta: -40")
     expect(page.locator("#nilB")).to_have_text("Nil")

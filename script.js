@@ -574,8 +574,8 @@ function scoreHand(
       imm: false,
     };
   }
-  let scoreA = booksA >= bidA ? 10 * bidA + (booksA - bidA) : -10 * bidA;
-  let scoreB = booksB >= bidB ? 10 * bidB + (booksB - bidB) : -10 * bidB;
+  let scoreA = booksA >= bidA ? 10 * bidA : -10 * bidA;
+  let scoreB = booksB >= bidB ? 10 * bidB : -10 * bidB;
 
   const bagA = booksA > bidA ? booksA - bidA : 0;
   const bagB = booksB > bidB ? booksB - bidB : 0;
@@ -678,10 +678,10 @@ function deleteLastHand() {
 
     // Apply Blind 10 scoring
     if (!!orig.blindA) {
-      scoreA = +orig.booksA >= 10 ? 200 + (+orig.booksA - 10) : -200;
+      scoreA = +orig.booksA >= 10 ? 200 : -200;
     }
     if (!!orig.blindB) {
-      scoreB = +orig.booksB >= 10 ? 200 + (+orig.booksB - 10) : -200;
+      scoreB = +orig.booksB >= 10 ? 200 : -200;
     }
 
     state.bagsA += bagA;
@@ -957,10 +957,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let scoreB = baseScoreB;
 
     if (state.blind10A) {
-      scoreA = booksA >= 10 ? 200 + (booksA - 10) : -200;
+      scoreA = booksA >= 10 ? 200 : -200;
     }
     if (state.blind10B) {
-      scoreB = booksB >= 10 ? 200 + (booksB - 10) : -200;
+      scoreB = booksB >= 10 ? 200 : -200;
     }
     state.bagsA += bagA;
     state.bagsB += bagB;
