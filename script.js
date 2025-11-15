@@ -53,7 +53,7 @@ function startConfetti() {
   const parent = canvas.parentElement;
   if (!parent) return;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  if (!ctx || typeof rough === "undefined") return;
   const dpr = window.devicePixelRatio || 1;
   let width = 0;
   let height = 0;
@@ -597,11 +597,313 @@ function checkWin() {
   return null;
 }
 
+function updateChart() {
+  if (state.hands.length === 0) {
+    const chartsSection = $("#charts");
+    if (chartsSection) chartsSection.style.display = "none";
+    return;
+  }
+
+  const chartsSection = $("#charts");
+  if (chartsSection) chartsSection.style.display = "";
+
+  const canvas = document.getElementById("scoreChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  // Calculate cumulative scores
+  const dataA = [0];
+  const dataB = [0];
+  let runningA = 0;
+  let runningB = 0;
+
+  state.hands.forEach((h) => {
+    runningA += h.scoreA;
+    runningB += h.scoreB;
+    dataA.push(runningA);
+    dataB.push(runningB);
+  });
+
+  // Set canvas size (accounting for device pixel ratio)
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  // Chart dimensions
+  const padding = { top: 40, right: 60, bottom: 40, left: 60 };
+  const chartWidth = rect.width - padding.left - padding.right;
+  const chartHeight = rect.height - padding.top - padding.bottom;
+
+  // Find data range
+  const allData = [...dataA, ...dataB];
+  const minY = Math.min(0, ...allData);
+  const maxY = Math.max(500, ...allData);
+  const yRange = maxY - minY;
+
+  // Helper functions
+  const getX = (index) => padding.left + (index / (dataA.length - 1)) * chartWidth;
+  const getY = (value) => padding.top + chartHeight - ((value - minY) / yRange) * chartHeight;
+
+  // Clear canvas
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, rect.width, rect.height);
+
+  // Draw grid with xkcd style (slightly wavy)
+  ctx.strokeStyle = "#e5e7eb";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+
+  // Draw horizontal grid lines
+  const numHLines = 5;
+  for (let i = 0; i <= numHLines; i++) {
+    const y = padding.top + (i / numHLines) * chartHeight;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    for (let x = padding.left; x <= padding.left + chartWidth; x += 10) {
+      const wobble = Math.sin(x * 0.1 + i) * 0.5;
+      ctx.lineTo(x, y + wobble);
+    }
+    ctx.stroke();
+  }
+
+  // Draw vertical grid lines
+  const numVLines = Math.min(dataA.length - 1, 10);
+  for (let i = 0; i <= numVLines; i++) {
+    const x = padding.left + (i / numVLines) * chartWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    for (let y = padding.top; y <= padding.top + chartHeight; y += 10) {
+      const wobble = Math.cos(y * 0.1 + i) * 0.5;
+      ctx.lineTo(x + wobble, y);
+    }
+    ctx.stroke();
+  }
+
+  // Draw 500-point line (with dashed xkcd style)
+  if (maxY >= 500 && minY <= 500) {
+    const y500 = getY(500);
+    ctx.strokeStyle = "#16a34a";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y500);
+    for (let x = padding.left; x <= padding.left + chartWidth; x += 10) {
+      const wobble = Math.sin(x * 0.15) * 0.8;
+      ctx.lineTo(x, y500 + wobble);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Label for 500 line
+    ctx.fillStyle = "#16a34a";
+    ctx.font = "bold 12px 'Comic Sans MS', cursive, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("Win at 500", padding.left + chartWidth + 55, y500 + 4);
+  }
+
+  // Draw Team A line (blue)
+  ctx.strokeStyle = "#2563eb";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  dataA.forEach((value, i) => {
+    const x = getX(i);
+    const y = getY(value);
+    const wobble = Math.sin(i * 0.3) * 1.2;
+    if (i === 0) ctx.moveTo(x + wobble, y);
+    else ctx.lineTo(x + wobble, y);
+  });
+  ctx.stroke();
+
+  // Draw Team A points
+  ctx.fillStyle = "#2563eb";
+  dataA.forEach((value, i) => {
+    const x = getX(i);
+    const y = getY(value);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw Team B line (red)
+  ctx.strokeStyle = "#dc2626";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  dataB.forEach((value, i) => {
+    const x = getX(i);
+    const y = getY(value);
+    const wobble = Math.cos(i * 0.3) * 1.2;
+    if (i === 0) ctx.moveTo(x + wobble, y);
+    else ctx.lineTo(x + wobble, y);
+  });
+  ctx.stroke();
+
+  // Draw Team B points
+  ctx.fillStyle = "#dc2626";
+  dataB.forEach((value, i) => {
+    const x = getX(i);
+    const y = getY(value);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw axes
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top);
+  ctx.lineTo(padding.left, padding.top + chartHeight);
+  ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+  ctx.stroke();
+
+  // Y-axis labels
+  ctx.fillStyle = "#333";
+  ctx.font = "12px 'Comic Sans MS', cursive, sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for (let i = 0; i <= numHLines; i++) {
+    const value = Math.round(maxY - (i / numHLines) * yRange);
+    const y = padding.top + (i / numHLines) * chartHeight;
+    ctx.fillText(value.toString(), padding.left - 10, y);
+  }
+
+  // X-axis labels
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  dataA.forEach((_, i) => {
+    if (i % Math.max(1, Math.floor(dataA.length / 10)) === 0 || i === dataA.length - 1) {
+      const x = getX(i);
+      const label = i === 0 ? "Start" : `R${i}`;
+      ctx.fillText(label, x, padding.top + chartHeight + 10);
+    }
+  });
+
+  // Legend
+  const legendX = padding.left + 10;
+  const legendY = padding.top + 10;
+
+  // Team A legend
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(legendX, legendY, 20, 3);
+  ctx.fillStyle = "#333";
+  ctx.font = "bold 14px 'Comic Sans MS', cursive, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(state.teamA || "Team A", legendX + 25, legendY + 1);
+
+  // Team B legend
+  ctx.fillStyle = "#dc2626";
+  ctx.fillRect(legendX, legendY + 20, 20, 3);
+  ctx.fillStyle = "#333";
+  ctx.fillText(state.teamB || "Team B", legendX + 25, legendY + 21);
+}
+
+function updateStats() {
+  if (state.hands.length === 0) {
+    const statsSection = $("#stats");
+    if (statsSection) statsSection.style.display = "none";
+    return;
+  }
+
+  const statsSection = $("#stats");
+  if (statsSection) statsSection.style.display = "";
+
+  // Update team names in stats headers
+  const statsTeamAName = $("#statsTeamAName");
+  if (statsTeamAName) statsTeamAName.textContent = state.teamA || "Team A";
+  const statsTeamBName = $("#statsTeamBName");
+  if (statsTeamBName) statsTeamBName.textContent = state.teamB || "Team B";
+
+  // Calculate statistics for Team A
+  let bestHandA = -Infinity;
+  let worstHandA = Infinity;
+  let setsA = 0;
+  let totalBagsA = 0;
+  let totalScoreA = 0;
+
+  state.hands.forEach((h) => {
+    const score = h.scoreA;
+    if (score > bestHandA) bestHandA = score;
+    if (score < worstHandA) worstHandA = score;
+    totalScoreA += score;
+
+    // Count sets (when bid > books and round > 1)
+    if (h.round > 1 && !h.blindA && !h.nilA) {
+      const bid = parseInt(h.bidA);
+      if (!isNaN(bid) && h.booksA < bid) {
+        setsA++;
+      }
+    }
+  });
+
+  // Get final bags from state
+  totalBagsA = state.bagsA;
+
+  const avgScoreA = state.hands.length > 0 ? (totalScoreA / state.hands.length).toFixed(1) : "0.0";
+
+  // Calculate statistics for Team B
+  let bestHandB = -Infinity;
+  let worstHandB = Infinity;
+  let setsB = 0;
+  let totalBagsB = 0;
+  let totalScoreB = 0;
+
+  state.hands.forEach((h) => {
+    const score = h.scoreB;
+    if (score > bestHandB) bestHandB = score;
+    if (score < worstHandB) worstHandB = score;
+    totalScoreB += score;
+
+    // Count sets (when bid > books and round > 1)
+    if (h.round > 1 && !h.blindB && !h.nilB) {
+      const bid = parseInt(h.bidB);
+      if (!isNaN(bid) && h.booksB < bid) {
+        setsB++;
+      }
+    }
+  });
+
+  // Get final bags from state
+  totalBagsB = state.bagsB;
+
+  const avgScoreB = state.hands.length > 0 ? (totalScoreB / state.hands.length).toFixed(1) : "0.0";
+
+  // Display stats for Team A
+  const statsTeamA = $("#statsTeamA");
+  if (statsTeamA) {
+    statsTeamA.innerHTML = `
+      <p><strong>Best hand:</strong> ${bestHandA === -Infinity ? "N/A" : bestHandA}</p>
+      <p><strong>Worst hand:</strong> ${worstHandA === Infinity ? "N/A" : worstHandA}</p>
+      <p><strong>Times set:</strong> ${setsA}</p>
+      <p><strong>Current bags:</strong> ${totalBagsA}</p>
+      <p><strong>Avg score/hand:</strong> ${avgScoreA}</p>
+    `;
+  }
+
+  // Display stats for Team B
+  const statsTeamB = $("#statsTeamB");
+  if (statsTeamB) {
+    statsTeamB.innerHTML = `
+      <p><strong>Best hand:</strong> ${bestHandB === -Infinity ? "N/A" : bestHandB}</p>
+      <p><strong>Worst hand:</strong> ${worstHandB === Infinity ? "N/A" : worstHandB}</p>
+      <p><strong>Times set:</strong> ${setsB}</p>
+      <p><strong>Current bags:</strong> ${totalBagsB}</p>
+      <p><strong>Avg score/hand:</strong> ${avgScoreB}</p>
+    `;
+  }
+}
+
 function pushHand(h) {
   state.hands.push(h);
   renderHands();
   updatePills();
   updateDeleteButton();
+  updateChart();
+  updateStats();
   saveState();
 }
 
@@ -636,6 +938,8 @@ function renderHands() {
     tbody.appendChild(tr);
   });
   updateDeleteButton();
+  updateChart();
+  updateStats();
 }
 
 function deleteLastHand() {
@@ -1076,4 +1380,11 @@ document.addEventListener("DOMContentLoaded", () => {
   updateNewGameButtons();
   updateUnbidNote();
   updateBooksSum();
+});
+
+// Add window resize handler to redraw chart
+window.addEventListener("resize", () => {
+  if (state.hands.length > 0) {
+    updateChart();
+  }
 });
