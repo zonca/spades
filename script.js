@@ -331,6 +331,11 @@ function updatePills() {
   if (pointsA) pointsA.textContent = state.totalA;
   const pointsB = $("#scorePointsB");
   if (pointsB) pointsB.textContent = state.totalB;
+  
+  const bagsA = $("#scoreBagsA");
+  if (bagsA) bagsA.textContent = state.bagsA > 0 ? `(${state.bagsA})` : "";
+  const bagsB = $("#scoreBagsB");
+  if (bagsB) bagsB.textContent = state.bagsB > 0 ? `(${state.bagsB})` : "";
 
   const bidLabelA = $("#bidLabelA");
   if (bidLabelA) bidLabelA.textContent = displayNameA;
@@ -598,20 +603,30 @@ function renderHands() {
   const tbody = $("#handsTable tbody");
   tbody.innerHTML = "";
   let runningA = 0,
-    runningB = 0;
+    runningB = 0,
+    runningBagsA = 0,
+    runningBagsB = 0;
   state.hands.forEach((h, i) => {
     runningA += h.scoreA;
     runningB += h.scoreB;
+    if (h.runningBagsA !== undefined) {
+      runningBagsA = h.runningBagsA;
+    }
+    if (h.runningBagsB !== undefined) {
+      runningBagsB = h.runningBagsB;
+    }
     const bidA = h.round === 1 ? "-" : h.bidA;
     const bidB = h.round === 1 ? "-" : h.bidB;
+    const bagsDisplayA = runningBagsA > 0 ? ` (${runningBagsA})` : "";
+    const bagsDisplayB = runningBagsB > 0 ? ` (${runningBagsB})` : "";
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td>
         <td>${h.booksA} (${bidA})</td>
         <td>${h.booksB} (${bidB})</td>
         <td>${h.scoreA}</td>
         <td>${h.scoreB}</td>
-        <td>${runningA}</td>
-        <td>${runningB}</td>`;
+        <td>${runningA}${bagsDisplayA}</td>
+        <td>${runningB}${bagsDisplayB}</td>`;
     tbody.appendChild(tr);
   });
   updateDeleteButton();
@@ -711,6 +726,8 @@ function deleteLastHand() {
       blindB: orig.blindB,
       nilA: orig.nilA,
       nilB: orig.nilB,
+      runningBagsA: state.bagsA,
+      runningBagsB: state.bagsB,
     });
   });
   state.round = saved.length + 1;
@@ -979,6 +996,8 @@ document.addEventListener("DOMContentLoaded", () => {
         blindB: state.blind10B,
         nilA: priorNilA,
         nilB: priorNilB,
+        runningBagsA: state.bagsA,
+        runningBagsB: state.bagsB,
       });
       state.nilA = false;
       state.nilB = false;
@@ -1009,6 +1028,8 @@ document.addEventListener("DOMContentLoaded", () => {
       blindB: state.blind10B,
       nilA: priorNilA,
       nilB: priorNilB,
+      runningBagsA: state.bagsA,
+      runningBagsB: state.bagsB,
     });
     state.blind10A = false;
     state.blind10B = false;
