@@ -14,40 +14,36 @@ def test_player_name_fields_exist(page: Page, app_url: str):
 
 def test_dealer_display_visible_on_game_start(start_game):
     """Test that dealer display shows up after starting game."""
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
     
     # Dealer row should be visible
     expect(page.locator("#dealerRow")).to_be_visible()
     expect(page.locator("#dealerDisplay")).to_be_visible()
-    # Default dealer should be Team A P1 since no player names were provided
-    expect(page.locator("#dealerDisplay")).to_contain_text("Dealer:")
+    # First dealer should be Alice (A1)
+    expect(page.locator("#dealerDisplay")).to_contain_text("Dealer: Alice")
 
 
 def test_dealer_uses_player_names_when_provided(page: Page, app_url: str):
     """Test that dealer display uses actual player names when provided."""
     page.goto(app_url)
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
-    page.fill("#playerA1", "Alice")
-    page.fill("#playerA2", "Alex")
-    page.fill("#playerB1", "Bob")
-    page.fill("#playerB2", "Beth")
+    # Fill in player names
+    page.fill("#playerA1", "Charlie")
+    page.fill("#playerA2", "Carol")
+    page.fill("#playerB1", "Dave")
+    page.fill("#playerB2", "Diana")
     
     page.click("#startBtn")
     
-    # First dealer should be Alice (A1)
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Alice")
+    # First dealer should be Charlie (A1)
+    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Charlie")
 
 
 def test_dealer_rotation_across_hands(page: Page, app_url: str):
     """Test that dealer rotates correctly: A1 -> B1 -> A2 -> B2 -> A1..."""
     page.goto(app_url)
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -95,9 +91,7 @@ def test_dealer_shown_in_hands_table(page: Page, app_url: str):
     """Test that dealer name is shown in the hands table for each round."""
     page.goto(app_url)
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -134,41 +128,28 @@ def test_dealer_shown_in_hands_table(page: Page, app_url: str):
     expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(2)")).to_have_text("Beth")
 
 
-def test_dealer_fallback_to_team_name_when_no_player_name(page: Page, app_url: str):
-    """Test that dealer falls back to team name when player name not provided."""
+def test_team_names_derived_from_player_names(page: Page, app_url: str):
+    """Test that team names are derived as 'Player1 & Player2'."""
     page.goto(app_url)
     
-    # Only fill in team names, not player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
+    page.fill("#playerA1", "Alice")
+    page.fill("#playerA2", "Alex")
+    page.fill("#playerB1", "Bob")
+    page.fill("#playerB2", "Beth")
     
     page.click("#startBtn")
     
-    # First dealer should show fallback: Eagles P1
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Eagles P1")
-    
-    # Submit Round 1
-    page.locator("[data-for='booksA'][data-arrow='up']").click()
-    page.click("#submitHandBtn")
-    
-    # Round 2: Dealer should be Hawks P1
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Hawks P1")
-    
-    # Submit Round 2
-    page.click("#lockBidsBtn")
-    page.click("#submitHandBtn")
-    
-    # Round 3: Dealer should be Eagles P2
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Eagles P2")
+    # Team names should be derived from player names
+    expect(page.locator("#scoreNameA")).to_have_text("Alice & Alex")
+    expect(page.locator("#scoreNameB")).to_have_text("Bob & Beth")
 
 
 def test_dealer_preserved_after_delete_last_hand(page: Page, app_url: str):
     """Test that deleting last hand correctly restores dealer index."""
     page.goto(app_url)
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -202,9 +183,7 @@ def test_dealer_shown_in_table_after_delete(page: Page, app_url: str):
     """Test that dealer info in table is preserved after delete."""
     page.goto(app_url)
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -237,51 +216,31 @@ def test_dealer_shown_in_table_after_delete(page: Page, app_url: str):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(2)")).to_have_text("Bob")
 
 
-def test_partial_player_names(page: Page, app_url: str):
-    """Test dealer display with only some player names filled in."""
+def test_all_player_names_required(page: Page, app_url: str):
+    """Test that all 4 player names are required to start the game."""
     page.goto(app_url)
     
-    # Fill in team names and only some player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Only fill in some player names
     page.fill("#playerA1", "Alice")
-    # Leave A2 empty
     page.fill("#playerB1", "Bob")
-    # Leave B2 empty
+    # Leave A2 and B2 empty
     
     page.click("#startBtn")
     
-    # Round 1: Alice
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Alice")
-    
-    # Submit Round 1
-    page.locator("[data-for='booksA'][data-arrow='up']").click()
-    page.click("#submitHandBtn")
-    
-    # Round 2: Bob
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Bob")
-    
-    # Submit Round 2
-    page.click("#lockBidsBtn")
-    page.click("#submitHandBtn")
-    
-    # Round 3: Should fallback to Eagles P2
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Eagles P2")
-    
-    # Submit Round 3
-    page.click("#lockBidsBtn")
-    page.click("#submitHandBtn")
-    
-    # Round 4: Should fallback to Hawks P2
-    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Hawks P2")
+    # Setup should still be visible (game didn't start)
+    expect(page.locator("#setup")).to_be_visible()
+    expect(page.locator("#setupError")).to_be_visible()
 
 
 def test_dealer_header_in_table(page: Page, app_url: str):
     """Test that the table header includes Dealer column."""
     page.goto(app_url)
     
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in all player names
+    page.fill("#playerA1", "Alice")
+    page.fill("#playerA2", "Alex")
+    page.fill("#playerB1", "Bob")
+    page.fill("#playerB2", "Beth")
     
     page.click("#startBtn")
     

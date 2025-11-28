@@ -3,7 +3,7 @@ from playwright.sync_api import expect
 
 def test_sandbag_display_in_scoreboard(start_game, play_hand):
     """Test that sandbags are displayed separately in scoreboard."""
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Round 1 (no bids, books only)
     expect(page.locator("#pillRound")).to_have_text("Round 1")
@@ -27,7 +27,7 @@ def test_sandbag_display_in_scoreboard(start_game, play_hand):
 
 def test_sandbag_display_in_hands_table(start_game, play_hand):
     """Test that sandbags are displayed separately in hands table."""
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Round 1
     page.locator("[data-for='booksA'][data-arrow='up']").click()  # booksA: 7, booksB: 6
@@ -55,7 +55,7 @@ def test_sandbag_display_in_hands_table(start_game, play_hand):
 
 def test_sandbag_reset_on_penalty(start_game, play_hand):
     """Test that sandbags reset to 0 after penalty is applied."""
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Round 1
     page.locator("[data-for='booksA'][data-arrow='up']").click()  # booksA: 7, booksB: 6
@@ -84,7 +84,7 @@ def test_sandbag_reset_on_penalty(start_game, play_hand):
 
 def test_sandbag_accumulation_multiple_rounds(start_game, play_hand):
     """Test sandbag accumulation across multiple rounds."""
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Round 1
     page.locator("[data-for='booksA'][data-arrow='up']").click()
@@ -116,7 +116,7 @@ def test_sandbag_accumulation_multiple_rounds(start_game, play_hand):
 
 def test_both_teams_hit_penalty_same_round(start_game, play_hand):
     """Test when both teams hit 10 sandbags in the same round."""
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Round 1
     page.locator("[data-for='booksA'][data-arrow='up']").click()

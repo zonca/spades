@@ -11,10 +11,10 @@ def _play_round_one(page) -> None:
 
 
 def test_nil_success_awards_bonus(start_game):
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
     _play_round_one(page)
 
-    # Round 2 bidding: Team Alpha declares Nil, bids 5 vs 8.
+    # Round 2 bidding: Alice & Alex declares Nil, bids 5 vs 8.
     page.locator("[data-for='bidA'][data-arrow='down']").click()  # 6 -> 5
     page.locator("[data-for='bidB'][data-arrow='up']").click()  # 6 -> 7
     page.locator("[data-for='bidB'][data-arrow='up']").click()  # 7 -> 8
@@ -23,7 +23,7 @@ def test_nil_success_awards_bonus(start_game):
 
     page.click("#lockBidsBtn")
 
-    # Set books so Team Alpha makes Nil and Team Beta takes all 13.
+    # Set books so Alice & Alex makes Nil and Bob & Beth takes all 13.
     for _ in range(6):
         page.locator("[data-for='booksA'][data-arrow='down']").click()
     expect(page.locator("#booksA")).to_have_text("0")
@@ -40,23 +40,23 @@ def test_nil_success_awards_bonus(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("80")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("170")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(8)")).to_have_text("140 (5)")
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 170")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 140 (5)")
+    expect(page.locator("#pillA")).to_have_text("Alice & Alex: 170")
+    expect(page.locator("#pillB")).to_have_text("Bob & Beth: 140 (5)")
     expect(page.locator("#nilA")).to_have_text("Nil")
 
 
 def test_nil_failure_applies_penalty(start_game):
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
     _play_round_one(page)
 
-    # Round 2 bidding: Team Beta declares Nil, bids stay 6 / 7.
+    # Round 2 bidding: Bob & Beth declares Nil, bids stay 6 / 7.
     page.locator("[data-for='bidB'][data-arrow='up']").click()  # 6 -> 7
     page.click("#nilB")
     expect(page.locator("#nilB")).to_have_text("Nil ✓")
 
     page.click("#lockBidsBtn")
 
-    # Books: Team Alpha 5, Team Beta 8 (Nil fails).
+    # Books: Alice & Alex 5, Bob & Beth 8 (Nil fails).
     page.locator("[data-for='booksA'][data-arrow='down']").click()  # 6 -> 5
     expect(page.locator("#booksA")).to_have_text("5")
     expect(page.locator("#booksB")).to_have_text("8")
@@ -71,6 +71,6 @@ def test_nil_failure_applies_penalty(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("-100")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("10")
     expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(8)")).to_have_text("-40 (8)")
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 10")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: -40 (8)")
+    expect(page.locator("#pillA")).to_have_text("Alice & Alex: 10")
+    expect(page.locator("#pillB")).to_have_text("Bob & Beth: -40 (8)")
     expect(page.locator("#nilB")).to_have_text("Nil")

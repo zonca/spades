@@ -2,7 +2,7 @@ from playwright.sync_api import expect
 
 
 def test_round1_valid_hand(start_game):
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Verify Bids section is hidden in Round 1
     expect(page.locator("#bidsRow")).to_be_hidden()
@@ -24,8 +24,8 @@ def test_round1_valid_hand(start_game):
 
     # Verify scores in the table
     # Round 1: Score = 10 * books
-    # Team Alpha (7 books): 70 points
-    # Team Beta (6 books): 60 points
+    # Alice & Alex (7 books): 70 points
+    # Bob & Beth (6 books): 60 points
     # Column indices: 1=#, 2=Dealer, 3=Books A, 4=Books B, 5=Score A, 6=Score B, 7=Total A, 8=Total B
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(5)")).to_have_text("70")
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(6)")).to_have_text("60")
@@ -33,5 +33,5 @@ def test_round1_valid_hand(start_game):
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(8)")).to_have_text("60")
 
     # Verify total scores in pills
-    expect(page.locator("#pillA")).to_have_text("Team Alpha: 70")
-    expect(page.locator("#pillB")).to_have_text("Team Beta: 60")
+    expect(page.locator("#pillA")).to_have_text("Alice & Alex: 70")
+    expect(page.locator("#pillB")).to_have_text("Bob & Beth: 60")

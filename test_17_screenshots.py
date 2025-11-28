@@ -10,9 +10,7 @@ def test_screenshot_setup_with_player_fields(page: Page, app_url: str):
     page.goto(app_url)
     page.set_viewport_size({"width": 480, "height": 800})
     
-    # Fill in team names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -26,9 +24,7 @@ def test_screenshot_dealer_display_round1(page: Page, app_url: str):
     page.goto(app_url)
     page.set_viewport_size({"width": 480, "height": 800})
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -44,9 +40,7 @@ def test_screenshot_dealer_rotation(page: Page, app_url: str):
     page.goto(app_url)
     page.set_viewport_size({"width": 480, "height": 900})
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
@@ -85,9 +79,7 @@ def test_screenshot_hands_table_with_dealers(page: Page, app_url: str):
     page.goto(app_url)
     page.set_viewport_size({"width": 480, "height": 1200})
     
-    # Fill in team and player names
-    page.fill("#teamA", "Eagles")
-    page.fill("#teamB", "Hawks")
+    # Fill in player names
     page.fill("#playerA1", "Alice")
     page.fill("#playerA2", "Alex")
     page.fill("#playerB1", "Bob")
