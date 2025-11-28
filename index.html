@@ -87,6 +87,26 @@
           <input id="teamB" type="text" placeholder="Team B" />
         </div>
       </div>
+      <div class="row">
+        <div class="column">
+          <label for="playerA1">Team A Player 1</label>
+          <input id="playerA1" type="text" placeholder="Player 1" />
+        </div>
+        <div class="column">
+          <label for="playerB1">Team B Player 1</label>
+          <input id="playerB1" type="text" placeholder="Player 1" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="column">
+          <label for="playerA2">Team A Player 2</label>
+          <input id="playerA2" type="text" placeholder="Player 2" />
+        </div>
+        <div class="column">
+          <label for="playerB2">Team B Player 2</label>
+          <input id="playerB2" type="text" placeholder="Player 2" />
+        </div>
+      </div>
       <div class="toolbar">
         <button id="startBtn" class="button">Start Game</button>
         <button id="resumeBtn" class="button button-outline" style="display:none;">
@@ -119,6 +139,10 @@
             <span id="scoreBagsB" style="font-size: 1.2rem; color: #666; margin-left: 8px;"></span>
           </div>
         </div>
+      </div>
+
+      <div id="dealerRow" style="display:none;">
+        <p id="dealerDisplay" style="font-size:1.1rem; font-weight:600; color:#333; margin-bottom:12px;"></p>
       </div>
 
       <div id="bidsRow">
@@ -192,6 +216,7 @@
           <thead>
             <tr>
               <th rowspan="2">#</th>
+              <th rowspan="2">Dealer</th>
               <th colspan="2">Books (bid)</th>
               <th colspan="2">Score</th>
               <th colspan="2">Total (bags)</th>

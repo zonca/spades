@@ -7,6 +7,11 @@ function createInitialState() {
     phase: "books",
     teamA: "Team A",
     teamB: "Team B",
+    playerA1: "",
+    playerA2: "",
+    playerB1: "",
+    playerB2: "",
+    dealerIndex: 0, // 0: A1, 1: B1, 2: A2, 3: B2
     totalA: 0,
     totalB: 0,
     bagsA: 0,
@@ -36,6 +41,33 @@ const $ = (s) => document.querySelector(s);
 
 function getSpinnerText(id) {
   return document.getElementById(id)?.textContent || "";
+}
+
+function getDealerName(dealerIndex) {
+  // Dealer order: A1 -> B1 -> A2 -> B2 -> A1 -> ...
+  const idx = dealerIndex % 4;
+  switch (idx) {
+    case 0: return state.playerA1 || `${state.teamA} P1`;
+    case 1: return state.playerB1 || `${state.teamB} P1`;
+    case 2: return state.playerA2 || `${state.teamA} P2`;
+    case 3: return state.playerB2 || `${state.teamB} P2`;
+    default: return "Unknown";
+  }
+}
+
+function updateDealerDisplay() {
+  const dealerRow = $("#dealerRow");
+  const dealerDisplay = $("#dealerDisplay");
+  if (!dealerRow || !dealerDisplay) return;
+  
+  if (state.gameOver) {
+    dealerRow.style.display = "none";
+    return;
+  }
+  
+  const dealerName = getDealerName(state.dealerIndex);
+  dealerDisplay.textContent = `🂡 Dealer: ${dealerName}`;
+  dealerRow.style.display = "";
 }
 
 function stopConfetti() {
@@ -246,6 +278,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   };
   if (savedState.nilPrevBidA === undefined) savedState.nilPrevBidA = 6;
   if (savedState.nilPrevBidB === undefined) savedState.nilPrevBidB = 6;
+  if (savedState.dealerIndex === undefined) savedState.dealerIndex = 0;
   Object.assign(state, savedState);
   if (!state.started && state.hands.length > 0) state.started = true;
 
@@ -255,6 +288,10 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   }
   $("#teamA").value = state.teamA;
   $("#teamB").value = state.teamB;
+  $("#playerA1").value = state.playerA1 || "";
+  $("#playerA2").value = state.playerA2 || "";
+  $("#playerB1").value = state.playerB1 || "";
+  $("#playerB2").value = state.playerB2 || "";
 
   // Restore spinner values
   const ui = snapshot.ui || {};
@@ -266,6 +303,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   renderHands();
   updatePills();
   togglePhaseUI();
+  updateDealerDisplay();
 
   if (state.lockedBids) {
     const lock = $("#bidsActions");
@@ -927,8 +965,10 @@ function renderHands() {
     const bidB = h.round === 1 ? "-" : h.bidB;
     const bagsDisplayA = runningBagsA > 0 ? ` (${runningBagsA})` : "";
     const bagsDisplayB = runningBagsB > 0 ? ` (${runningBagsB})` : "";
+    const dealerName = h.dealer || getDealerName(i);
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td>
+        <td>${dealerName}</td>
         <td>${h.booksA} (${bidA})</td>
         <td>${h.booksB} (${bidB})</td>
         <td>${h.scoreA}</td>
@@ -1038,9 +1078,11 @@ function deleteLastHand() {
       nilB: orig.nilB,
       runningBagsA: state.bagsA,
       runningBagsB: state.bagsB,
+      dealer: orig.dealer,
     });
   });
   state.round = saved.length + 1;
+  state.dealerIndex = saved.length % 4;
   state.phase = state.round === 1 ? "books" : "bids";
   state.lockedBids = false;
   state.blind10A = false;
@@ -1051,6 +1093,7 @@ function deleteLastHand() {
   renderHands();
   togglePhaseUI();
   updateNewGameButtons();
+  updateDealerDisplay();
   const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "";
   $("#status").textContent = "Deleted last hand.";
@@ -1098,6 +1141,11 @@ document.addEventListener("DOMContentLoaded", () => {
     fresh.started = true;
     fresh.teamA = $("#teamA").value || "Team A";
     fresh.teamB = $("#teamB").value || "Team B";
+    fresh.playerA1 = $("#playerA1").value || "";
+    fresh.playerA2 = $("#playerA2").value || "";
+    fresh.playerB1 = $("#playerB1").value || "";
+    fresh.playerB2 = $("#playerB2").value || "";
+    fresh.dealerIndex = 0;
     Object.assign(state, fresh);
     pendingSnapshot = null;
     $("#setup").style.display = "none";
@@ -1108,6 +1156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePills();
     togglePhaseUI();
     updateNewGameButtons();
+    updateDealerDisplay();
     $("#bidA").textContent = "6";
     $("#bidB").textContent = "6";
     $("#booksA").textContent = "6";
@@ -1294,6 +1343,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const winner = scoreA === -99999 ? state.teamB : state.teamA;
       const priorNilA = state.nilA;
       const priorNilB = state.nilB;
+      const currentDealer = getDealerName(state.dealerIndex);
       pushHand({
         round: state.round,
         bidA: "-",
@@ -1308,6 +1358,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nilB: priorNilB,
         runningBagsA: state.bagsA,
         runningBagsB: state.bagsB,
+        dealer: currentDealer,
       });
       state.nilA = false;
       state.nilB = false;
@@ -1326,6 +1377,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.totalB += scoreB;
     const priorNilA = state.nilA;
     const priorNilB = state.nilB;
+    const currentDealer = getDealerName(state.dealerIndex);
     pushHand({
       round: state.round,
       bidA: state.round === 1 ? "-" : bidA,
@@ -1340,6 +1392,7 @@ document.addEventListener("DOMContentLoaded", () => {
       nilB: priorNilB,
       runningBagsA: state.bagsA,
       runningBagsB: state.bagsB,
+      dealer: currentDealer,
     });
     state.blind10A = false;
     state.blind10B = false;
@@ -1354,9 +1407,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     state.round++;
+    state.dealerIndex = (state.dealerIndex + 1) % 4;
     state.phase = "bids";
     updatePills();
     togglePhaseUI();
+    updateDealerDisplay();
     $("#bidA").textContent = "6";
     $("#bidB").textContent = "6";
     updateUnbidNote();
