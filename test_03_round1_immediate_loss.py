@@ -2,7 +2,7 @@ from playwright.sync_api import expect
 
 
 def test_round1_immediate_loss(start_game):
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
 
     # Verify Bids section is hidden in Round 1
     expect(page.locator("#bidsRow")).to_be_hidden()
@@ -22,6 +22,6 @@ def test_round1_immediate_loss(start_game):
 
     # Verify winner section is displayed
     expect(page.locator("#winner")).to_be_visible()
-    expect(page.locator("#winnerText")).to_have_text("Team Beta wins!")
+    expect(page.locator("#winnerText")).to_have_text("Bob & Beth wins!")
     expect(page.locator("#newGameBtn")).to_be_visible()
     expect(page.locator("#status")).to_have_text("")

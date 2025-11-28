@@ -14,14 +14,21 @@ def app_url() -> str:
 
 
 @pytest.fixture
-def start_game(page: Page, app_url: str) -> Callable[[str, str], Page]:
-    """Load the app, fill in team names, and click Start."""
+def start_game(page: Page, app_url: str) -> Callable[..., Page]:
+    """Load the app, fill in all 4 player names, and click Start."""
 
-    def _start(team_a: str = "Team Alpha", team_b: str = "Team Beta") -> Page:
+    def _start(
+        player_a1: str = "Alice",
+        player_a2: str = "Alex",
+        player_b1: str = "Bob",
+        player_b2: str = "Beth",
+    ) -> Page:
         page.goto(app_url)
         page.on("console", lambda msg: print(f"Browser console: {msg.text}"))
-        page.fill("#teamA", team_a)
-        page.fill("#teamB", team_b)
+        page.fill("#playerA1", player_a1)
+        page.fill("#playerA2", player_a2)
+        page.fill("#playerB1", player_b1)
+        page.fill("#playerB2", player_b2)
         page.click("#startBtn")
         return page
 

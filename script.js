@@ -5,8 +5,11 @@ function createInitialState() {
   return {
     round: 1,
     phase: "books",
-    teamA: "Team A",
-    teamB: "Team B",
+    playerA1: "",
+    playerA2: "",
+    playerB1: "",
+    playerB2: "",
+    dealerIndex: 0, // 0: A1, 1: B1, 2: A2, 3: B2
     totalA: 0,
     totalB: 0,
     bagsA: 0,
@@ -27,6 +30,22 @@ function createInitialState() {
   };
 }
 
+// Helper to get team name from player names
+function getTeamName(player1, player2, fallback) {
+  if (player1 && player2) {
+    return `${player1} & ${player2}`;
+  }
+  return fallback;
+}
+
+function getTeamA() {
+  return getTeamName(state.playerA1, state.playerA2, "Team A");
+}
+
+function getTeamB() {
+  return getTeamName(state.playerB1, state.playerB2, "Team B");
+}
+
 const state = createInitialState();
 let pendingSnapshot = null;
 let isHydrating = false;
@@ -36,6 +55,33 @@ const $ = (s) => document.querySelector(s);
 
 function getSpinnerText(id) {
   return document.getElementById(id)?.textContent || "";
+}
+
+function getDealerName(dealerIndex) {
+  // Dealer order: A1 -> B1 -> A2 -> B2 -> A1 -> ...
+  const idx = dealerIndex % 4;
+  switch (idx) {
+    case 0: return state.playerA1 || "Player A1";
+    case 1: return state.playerB1 || "Player B1";
+    case 2: return state.playerA2 || "Player A2";
+    case 3: return state.playerB2 || "Player B2";
+    default: return "Unknown";
+  }
+}
+
+function updateDealerDisplay() {
+  const dealerRow = $("#dealerRow");
+  const dealerDisplay = $("#dealerDisplay");
+  if (!dealerRow || !dealerDisplay) return;
+  
+  if (state.gameOver) {
+    dealerRow.style.display = "none";
+    return;
+  }
+  
+  const dealerName = getDealerName(state.dealerIndex);
+  dealerDisplay.textContent = `🂡 Dealer: ${dealerName}`;
+  dealerRow.style.display = "";
 }
 
 function stopConfetti() {
@@ -246,6 +292,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   };
   if (savedState.nilPrevBidA === undefined) savedState.nilPrevBidA = 6;
   if (savedState.nilPrevBidB === undefined) savedState.nilPrevBidB = 6;
+  if (savedState.dealerIndex === undefined) savedState.dealerIndex = 0;
   Object.assign(state, savedState);
   if (!state.started && state.hands.length > 0) state.started = true;
 
@@ -253,8 +300,10 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
     $("#setup").style.display = "none";
     $("#game").style.display = "";
   }
-  $("#teamA").value = state.teamA;
-  $("#teamB").value = state.teamB;
+  $("#playerA1").value = state.playerA1 || "";
+  $("#playerA2").value = state.playerA2 || "";
+  $("#playerB1").value = state.playerB1 || "";
+  $("#playerB2").value = state.playerB2 || "";
 
   // Restore spinner values
   const ui = snapshot.ui || {};
@@ -266,6 +315,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   renderHands();
   updatePills();
   togglePhaseUI();
+  updateDealerDisplay();
 
   if (state.lockedBids) {
     const lock = $("#bidsActions");
@@ -304,27 +354,13 @@ function clamp(v, min, max) {
 }
 
 function updatePills() {
-  const formatDisplayName = (name, fallback, suffix) => {
-    const trimmed = (name ?? "").trim();
-    if (!trimmed) return fallback;
-    const lower = trimmed.toLowerCase();
-    if (lower === fallback.toLowerCase()) return fallback;
-    if (lower.endsWith(suffix.toLowerCase())) return trimmed;
-    return `${trimmed} ${suffix}`;
-  };
-  const baseName = (name, fallback) => {
-    const trimmed = (name ?? "").trim();
-    return trimmed || fallback;
-  };
-  const displayNameA = formatDisplayName(state.teamA, "Team A", "(A)");
-  const displayNameB = formatDisplayName(state.teamB, "Team B", "(B)");
-  const baseNameA = baseName(state.teamA, "Team A");
-  const baseNameB = baseName(state.teamB, "Team B");
+  const teamA = getTeamA();
+  const teamB = getTeamB();
 
   const nameA = $("#scoreNameA");
-  if (nameA) nameA.textContent = displayNameA;
+  if (nameA) nameA.textContent = teamA;
   const nameB = $("#scoreNameB");
-  if (nameB) nameB.textContent = displayNameB;
+  if (nameB) nameB.textContent = teamB;
   const round = $("#pillRound");
   if (round) round.textContent = `Round ${state.round}`;
   const pointsA = $("#scorePointsA");
@@ -338,23 +374,23 @@ function updatePills() {
   if (bagsB) bagsB.textContent = state.bagsB > 0 ? `(${state.bagsB})` : "";
 
   const bidLabelA = $("#bidLabelA");
-  if (bidLabelA) bidLabelA.textContent = displayNameA;
+  if (bidLabelA) bidLabelA.textContent = teamA;
   const bidLabelB = $("#bidLabelB");
-  if (bidLabelB) bidLabelB.textContent = displayNameB;
+  if (bidLabelB) bidLabelB.textContent = teamB;
   const booksLabelA = $("#booksLabelA");
-  if (booksLabelA) booksLabelA.textContent = displayNameA;
+  if (booksLabelA) booksLabelA.textContent = teamA;
   const booksLabelB = $("#booksLabelB");
-  if (booksLabelB) booksLabelB.textContent = displayNameB;
+  if (booksLabelB) booksLabelB.textContent = teamB;
 
   const pillA = $("#pillA");
   if (pillA) {
     const bagsDisplayA = state.bagsA > 0 ? ` (${state.bagsA})` : "";
-    pillA.textContent = `${baseNameA}: ${state.totalA}${bagsDisplayA}`;
+    pillA.textContent = `${teamA}: ${state.totalA}${bagsDisplayA}`;
   }
   const pillB = $("#pillB");
   if (pillB) {
     const bagsDisplayB = state.bagsB > 0 ? ` (${state.bagsB})` : "";
-    pillB.textContent = `${baseNameB}: ${state.totalB}${bagsDisplayB}`;
+    pillB.textContent = `${teamB}: ${state.totalB}${bagsDisplayB}`;
   }
 }
 
@@ -592,7 +628,7 @@ function scoreHand(
 function checkWin() {
   if (state.totalA >= 500 || state.totalB >= 500) {
     if (state.totalA === state.totalB) return null;
-    return state.totalA > state.totalB ? state.teamA : state.teamB;
+    return state.totalA > state.totalB ? getTeamA() : getTeamB();
   }
   return null;
 }
@@ -793,13 +829,13 @@ function updateChart() {
   ctx.font = "bold 14px 'Comic Sans MS', cursive, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(state.teamA || "Team A", legendX + 25, legendY + 1);
+  ctx.fillText(getTeamA(), legendX + 25, legendY + 1);
 
   // Team B legend
   ctx.fillStyle = "#dc2626";
   ctx.fillRect(legendX, legendY + 20, 20, 3);
   ctx.fillStyle = "#333";
-  ctx.fillText(state.teamB || "Team B", legendX + 25, legendY + 21);
+  ctx.fillText(getTeamB(), legendX + 25, legendY + 21);
 }
 
 function updateStats() {
@@ -814,9 +850,9 @@ function updateStats() {
 
   // Update team names in stats headers
   const statsTeamAName = $("#statsTeamAName");
-  if (statsTeamAName) statsTeamAName.textContent = state.teamA || "Team A";
+  if (statsTeamAName) statsTeamAName.textContent = getTeamA();
   const statsTeamBName = $("#statsTeamBName");
-  if (statsTeamBName) statsTeamBName.textContent = state.teamB || "Team B";
+  if (statsTeamBName) statsTeamBName.textContent = getTeamB();
 
   // Calculate statistics for Team A
   let bestHandA = -Infinity;
@@ -927,8 +963,10 @@ function renderHands() {
     const bidB = h.round === 1 ? "-" : h.bidB;
     const bagsDisplayA = runningBagsA > 0 ? ` (${runningBagsA})` : "";
     const bagsDisplayB = runningBagsB > 0 ? ` (${runningBagsB})` : "";
+    const dealerName = h.dealer || getDealerName(i);
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td>
+        <td>${dealerName}</td>
         <td>${h.booksA} (${bidA})</td>
         <td>${h.booksB} (${bidB})</td>
         <td>${h.scoreA}</td>
@@ -1038,9 +1076,11 @@ function deleteLastHand() {
       nilB: orig.nilB,
       runningBagsA: state.bagsA,
       runningBagsB: state.bagsB,
+      dealer: orig.dealer,
     });
   });
   state.round = saved.length + 1;
+  state.dealerIndex = saved.length % 4;
   state.phase = state.round === 1 ? "books" : "bids";
   state.lockedBids = false;
   state.blind10A = false;
@@ -1051,6 +1091,7 @@ function deleteLastHand() {
   renderHands();
   togglePhaseUI();
   updateNewGameButtons();
+  updateDealerDisplay();
   const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "";
   $("#status").textContent = "Deleted last hand.";
@@ -1093,11 +1134,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Start game
   $("#startBtn").onclick = () => {
+    const playerA1 = $("#playerA1").value.trim();
+    const playerA2 = $("#playerA2").value.trim();
+    const playerB1 = $("#playerB1").value.trim();
+    const playerB2 = $("#playerB2").value.trim();
+    const errorEl = $("#setupError");
+    
+    // Validate all 4 player names are provided
+    if (!playerA1 || !playerA2 || !playerB1 || !playerB2) {
+      if (errorEl) errorEl.style.display = "";
+      return;
+    }
+    
+    // Hide error on valid submission
+    if (errorEl) errorEl.style.display = "none";
+    
     stopConfetti();
     const fresh = createInitialState();
     fresh.started = true;
-    fresh.teamA = $("#teamA").value || "Team A";
-    fresh.teamB = $("#teamB").value || "Team B";
+    fresh.playerA1 = playerA1;
+    fresh.playerA2 = playerA2;
+    fresh.playerB1 = playerB1;
+    fresh.playerB2 = playerB2;
+    fresh.dealerIndex = 0;
     Object.assign(state, fresh);
     pendingSnapshot = null;
     $("#setup").style.display = "none";
@@ -1108,6 +1167,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePills();
     togglePhaseUI();
     updateNewGameButtons();
+    updateDealerDisplay();
     $("#bidA").textContent = "6";
     $("#bidB").textContent = "6";
     $("#booksA").textContent = "6";
@@ -1290,10 +1350,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const immediateLoss =
       state.round === 1 && imm && (scoreA === -99999 || scoreB === -99999);
     if (immediateLoss) {
-      const loser = scoreA === -99999 ? state.teamA : state.teamB;
-      const winner = scoreA === -99999 ? state.teamB : state.teamA;
+      const loser = scoreA === -99999 ? getTeamA() : getTeamB();
+      const winner = scoreA === -99999 ? getTeamB() : getTeamA();
       const priorNilA = state.nilA;
       const priorNilB = state.nilB;
+      const currentDealer = getDealerName(state.dealerIndex);
       pushHand({
         round: state.round,
         bidA: "-",
@@ -1308,6 +1369,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nilB: priorNilB,
         runningBagsA: state.bagsA,
         runningBagsB: state.bagsB,
+        dealer: currentDealer,
       });
       state.nilA = false;
       state.nilB = false;
@@ -1326,6 +1388,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.totalB += scoreB;
     const priorNilA = state.nilA;
     const priorNilB = state.nilB;
+    const currentDealer = getDealerName(state.dealerIndex);
     pushHand({
       round: state.round,
       bidA: state.round === 1 ? "-" : bidA,
@@ -1340,6 +1403,7 @@ document.addEventListener("DOMContentLoaded", () => {
       nilB: priorNilB,
       runningBagsA: state.bagsA,
       runningBagsB: state.bagsB,
+      dealer: currentDealer,
     });
     state.blind10A = false;
     state.blind10B = false;
@@ -1354,9 +1418,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     state.round++;
+    state.dealerIndex = (state.dealerIndex + 1) % 4;
     state.phase = "bids";
     updatePills();
     togglePhaseUI();
+    updateDealerDisplay();
     $("#bidA").textContent = "6";
     $("#bidB").textContent = "6";
     updateUnbidNote();

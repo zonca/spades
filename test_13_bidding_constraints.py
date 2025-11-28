@@ -13,7 +13,7 @@ def _finish_round_one(page) -> None:
 
 
 def test_nil_sets_bid_to_zero_and_restores_previous_value(start_game):
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
     _finish_round_one(page)
 
     # Prepare by lowering Team A's bid to 5 so we can ensure it restores.
@@ -39,7 +39,7 @@ def test_nil_sets_bid_to_zero_and_restores_previous_value(start_game):
 
 
 def test_bid_arrows_cannot_drop_below_minimum(start_game):
-    page = start_game("Team Alpha", "Team Beta")
+    page = start_game()
     _finish_round_one(page)
 
     # Repeatedly press down beyond the floor; value must clamp to 4.
