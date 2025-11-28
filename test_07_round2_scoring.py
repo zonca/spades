@@ -23,9 +23,9 @@ def test_round2_scoring(start_game, play_hand):
     # Round 1: Alice & Alex: 70, Bob & Beth: 60
     # Round 2: Team A bid 6, books 7 -> Score = 10*6 = 60 (1 sandbag not counted in score)
     #          Team B bid 7, books 6 -> Score = -10*7 = -70
-    # Column indices: 1=#, 2=Dealer, 3=Books A, 4=Books B, 5=Score A, 6=Score B, 7=Total A, 8=Total B
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("60")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("-70")
+    # New compact layout: Row 3 is Team A of round 2, Row 4 is Team B of round 2
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(5)")).to_have_text("60")
+    expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(3)")).to_have_text("-70")
 
     # Verify total scores in pills
     # Total A: 70 + 60 = 130 with 1 sandbag

@@ -71,6 +71,12 @@
       max-width: 220px;
       font-weight: 700;
     }
+    .books-set { color: #dc2626; font-weight: 700; }
+    .books-made { color: #2563eb; font-weight: 700; }
+    #handsTable .row-team-a { border-bottom: none; }
+    #handsTable .row-team-b { border-top: none; }
+    #handsTable .row-team-b td { padding-top: 0; }
+    #handsTable .row-team-a td { padding-bottom: 2px; }
   </style>
 </head>
 <body>
@@ -207,19 +213,12 @@
         <table id="handsTable">
           <thead>
             <tr>
-              <th rowspan="2">#</th>
-              <th rowspan="2">Dealer</th>
-              <th colspan="2">Books (bid)</th>
-              <th colspan="2">Score</th>
-              <th colspan="2">Total (bags)</th>
-            </tr>
-            <tr>
-              <th>A</th>
-              <th>B</th>
-              <th>A</th>
-              <th>B</th>
-              <th>A</th>
-              <th>B</th>
+              <th>#</th>
+              <th>Dealer</th>
+              <th>Team</th>
+              <th>Books (bid)</th>
+              <th>Score</th>
+              <th>Total (bags)</th>
             </tr>
           </thead>
           <tbody></tbody>

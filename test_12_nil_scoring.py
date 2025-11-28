@@ -35,11 +35,11 @@ def test_nil_success_awards_bonus(start_game):
     # Verify Nil bonus applied.
     # Team A: Nil made (0 books) = +100
     # Team B: bid 8, made 13 = 10*8 = 80 (5 sandbags not counted in score)
-    # Column indices: 1=#, 2=Dealer, 3=Books A, 4=Books B, 5=Score A, 6=Score B, 7=Total A, 8=Total B
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("100")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("80")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("170")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(8)")).to_have_text("140 (5)")
+    # New compact layout: Row 3 is Team A of round 2, Row 4 is Team B of round 2
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(5)")).to_have_text("100")
+    expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(3)")).to_have_text("80")
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(6)")).to_have_text("170")
+    expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(4)")).to_have_text("140 (5)")
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 170")
     expect(page.locator("#pillB")).to_have_text("Bob & Beth: 140 (5)")
     expect(page.locator("#nilA")).to_have_text("Nil")
@@ -66,11 +66,11 @@ def test_nil_failure_applies_penalty(start_game):
     expect(page.locator("#pillRound")).to_have_text("Round 3")
     # Team A: bid 6, made 5 = -10*6 = -60
     # Team B: bid Nil (0), made 8 = -100 for failing Nil, plus 8 sandbags (not counted in score)
-    # Column indices: 1=#, 2=Dealer, 3=Books A, 4=Books B, 5=Score A, 6=Score B, 7=Total A, 8=Total B
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(5)")).to_have_text("-60")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(6)")).to_have_text("-100")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(7)")).to_have_text("10")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(8)")).to_have_text("-40 (8)")
+    # New compact layout: Row 3 is Team A of round 2, Row 4 is Team B of round 2
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(5)")).to_have_text("-60")
+    expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(3)")).to_have_text("-100")
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(6)")).to_have_text("10")
+    expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(4)")).to_have_text("-40 (8)")
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 10")
     expect(page.locator("#pillB")).to_have_text("Bob & Beth: -40 (8)")
     expect(page.locator("#nilB")).to_have_text("Nil")

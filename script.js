@@ -964,16 +964,52 @@ function renderHands() {
     const bagsDisplayA = runningBagsA > 0 ? ` (${runningBagsA})` : "";
     const bagsDisplayB = runningBagsB > 0 ? ` (${runningBagsB})` : "";
     const dealerName = h.dealer || getDealerName(i);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${i + 1}</td>
-        <td>${dealerName}</td>
-        <td>${h.booksA} (${bidA})</td>
-        <td>${h.booksB} (${bidB})</td>
+
+    // Determine color class for Team A books (bid)
+    let booksClassA = "";
+    if (h.round > 1) {
+      const bidANum = parseInt(bidA);
+      if (!isNaN(bidANum)) {
+        if (h.booksA < bidANum) {
+          booksClassA = "books-set"; // Red - team was set
+        } else if (h.booksA === bidANum) {
+          booksClassA = "books-made"; // Blue - bid equals result
+        }
+      }
+    }
+
+    // Determine color class for Team B books (bid)
+    let booksClassB = "";
+    if (h.round > 1) {
+      const bidBNum = parseInt(bidB);
+      if (!isNaN(bidBNum)) {
+        if (h.booksB < bidBNum) {
+          booksClassB = "books-set"; // Red - team was set
+        } else if (h.booksB === bidBNum) {
+          booksClassB = "books-made"; // Blue - bid equals result
+        }
+      }
+    }
+
+    // Row for Team A
+    const trA = document.createElement("tr");
+    trA.className = "row-team-a";
+    trA.innerHTML = `<td rowspan="2">${i + 1}</td>
+        <td rowspan="2">${dealerName}</td>
+        <td>A:</td>
+        <td class="${booksClassA}">${h.booksA} (${bidA})</td>
         <td>${h.scoreA}</td>
+        <td>${runningA}${bagsDisplayA}</td>`;
+    tbody.appendChild(trA);
+
+    // Row for Team B
+    const trB = document.createElement("tr");
+    trB.className = "row-team-b";
+    trB.innerHTML = `<td>B:</td>
+        <td class="${booksClassB}">${h.booksB} (${bidB})</td>
         <td>${h.scoreB}</td>
-        <td>${runningA}${bagsDisplayA}</td>
         <td>${runningB}${bagsDisplayB}</td>`;
-    tbody.appendChild(tr);
+    tbody.appendChild(trB);
   });
   updateDeleteButton();
   updateChart();

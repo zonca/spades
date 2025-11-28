@@ -103,29 +103,30 @@ def test_dealer_shown_in_hands_table(page: Page, app_url: str):
     page.locator("[data-for='booksA'][data-arrow='up']").click()
     page.click("#submitHandBtn")
     
-    # Check dealer column in table (column 2)
+    # Check dealer column in table (column 2 in Team A row)
+    # New compact layout: Row 1 is Team A of round 1
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(2)")).to_have_text("Alice")
     
     # Submit Round 2
     page.click("#lockBidsBtn")
     page.click("#submitHandBtn")
     
-    # Check dealer for round 2
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(2)")).to_have_text("Bob")
+    # Check dealer for round 2 (Row 3 is Team A of round 2)
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(2)")).to_have_text("Bob")
     
     # Submit Round 3
     page.click("#lockBidsBtn")
     page.click("#submitHandBtn")
     
-    # Check dealer for round 3
-    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(2)")).to_have_text("Alex")
+    # Check dealer for round 3 (Row 5 is Team A of round 3)
+    expect(page.locator("#handsTable tbody tr:nth-child(5) td:nth-child(2)")).to_have_text("Alex")
     
     # Submit Round 4
     page.click("#lockBidsBtn")
     page.click("#submitHandBtn")
     
-    # Check dealer for round 4
-    expect(page.locator("#handsTable tbody tr:nth-child(4) td:nth-child(2)")).to_have_text("Beth")
+    # Check dealer for round 4 (Row 7 is Team A of round 4)
+    expect(page.locator("#handsTable tbody tr:nth-child(7) td:nth-child(2)")).to_have_text("Beth")
 
 
 def test_team_names_derived_from_player_names(page: Page, app_url: str):
@@ -203,17 +204,17 @@ def test_dealer_shown_in_table_after_delete(page: Page, app_url: str):
     page.click("#lockBidsBtn")
     page.click("#submitHandBtn")
     
-    # Verify table shows dealers
+    # Verify table shows dealers (new compact layout: rows 1, 3, 5 are Team A rows for rounds 1, 2, 3)
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(2)")).to_have_text("Alice")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(2)")).to_have_text("Bob")
-    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(2)")).to_have_text("Alex")
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(2)")).to_have_text("Bob")
+    expect(page.locator("#handsTable tbody tr:nth-child(5) td:nth-child(2)")).to_have_text("Alex")
     
     # Delete last hand
     page.click("#deleteLastBtn")
     
-    # Round 1 and 2 should still have correct dealers
+    # Round 1 and 2 should still have correct dealers (rows 1 and 3)
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(2)")).to_have_text("Alice")
-    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(2)")).to_have_text("Bob")
+    expect(page.locator("#handsTable tbody tr:nth-child(3) td:nth-child(2)")).to_have_text("Bob")
 
 
 def test_all_player_names_required(page: Page, app_url: str):
