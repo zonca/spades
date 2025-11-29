@@ -26,11 +26,13 @@ def test_round1_valid_hand(start_game):
     # Round 1: Score = 10 * books
     # Alice & Alex (7 books): 70 points
     # Bob & Beth (6 books): 60 points
-    # Column indices: 1=#, 2=Dealer, 3=Books A, 4=Books B, 5=Score A, 6=Score B, 7=Total A, 8=Total B
+    # New compact layout: 2 rows per round
+    # Row 1 (Team A): cols #, Dealer, Team, Books(bid), Score, Total
+    # Row 2 (Team B): cols Team, Books(bid), Score, Total (due to rowspan)
     expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(5)")).to_have_text("70")
-    expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(6)")).to_have_text("60")
-    expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(7)")).to_have_text("70")
-    expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(8)")).to_have_text("60")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(3)")).to_have_text("60")
+    expect(page.locator("#handsTable tbody tr:nth-child(1) td:nth-child(6)")).to_have_text("70")
+    expect(page.locator("#handsTable tbody tr:nth-child(2) td:nth-child(4)")).to_have_text("60")
 
     # Verify total scores in pills
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 70")
