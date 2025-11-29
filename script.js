@@ -373,14 +373,15 @@ function updatePills() {
   const bagsB = $("#scoreBagsB");
   if (bagsB) bagsB.textContent = state.bagsB > 0 ? `(${state.bagsB})` : "";
 
+  // Update spinner labels with "Team A: Player1 & Player2" format
   const bidLabelA = $("#bidLabelA");
-  if (bidLabelA) bidLabelA.textContent = teamA;
+  if (bidLabelA) bidLabelA.textContent = `Team A: ${state.playerA1 || "Player1"} & ${state.playerA2 || "Player2"}`;
   const bidLabelB = $("#bidLabelB");
-  if (bidLabelB) bidLabelB.textContent = teamB;
+  if (bidLabelB) bidLabelB.textContent = `Team B: ${state.playerB1 || "Player1"} & ${state.playerB2 || "Player2"}`;
   const booksLabelA = $("#booksLabelA");
-  if (booksLabelA) booksLabelA.textContent = teamA;
+  if (booksLabelA) booksLabelA.textContent = `Team A: ${state.playerA1 || "Player1"} & ${state.playerA2 || "Player2"}`;
   const booksLabelB = $("#booksLabelB");
-  if (booksLabelB) booksLabelB.textContent = teamB;
+  if (booksLabelB) booksLabelB.textContent = `Team B: ${state.playerB1 || "Player1"} & ${state.playerB2 || "Player2"}`;
 
   const pillA = $("#pillA");
   if (pillA) {
@@ -996,7 +997,7 @@ function renderHands() {
     trA.className = "row-team-a";
     trA.innerHTML = `<td rowspan="2">${i + 1}</td>
         <td rowspan="2">${dealerName}</td>
-        <td>A:</td>
+        <td class="team-col">A:</td>
         <td class="${booksClassA}">${h.booksA} (${bidA})</td>
         <td>${h.scoreA}</td>
         <td>${runningA}${bagsDisplayA}</td>`;
@@ -1005,7 +1006,7 @@ function renderHands() {
     // Row for Team B
     const trB = document.createElement("tr");
     trB.className = "row-team-b";
-    trB.innerHTML = `<td>B:</td>
+    trB.innerHTML = `<td class="team-col">B:</td>
         <td class="${booksClassB}">${h.booksB} (${bidB})</td>
         <td>${h.scoreB}</td>
         <td>${runningB}${bagsDisplayB}</td>`;
