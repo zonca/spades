@@ -41,5 +41,5 @@ def test_match_end_win(start_game, play_hand):
 
     # Verify winner section is displayed
     expect(page.locator("#winner")).to_be_visible()
-    expect(page.locator("#winnerText")).to_have_text("Alice & Alex wins!")
+    expect(page.locator("#winnerText")).to_have_text("Alice & Alex win!")
     expect(page.locator("#newGameBtn")).to_be_visible()

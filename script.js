@@ -46,6 +46,13 @@ function getTeamB() {
   return getTeamName(state.playerB1, state.playerB2, "Team B");
 }
 
+function formatWinningMessage(winnerName) {
+  const name = winnerName || "Winner";
+  const isPlural = /(&)|(\sand\s)/i.test(name);
+  const verb = isPlural ? "win" : "wins";
+  return `${name} ${verb}!`;
+}
+
 const state = createInitialState();
 let pendingSnapshot = null;
 let isHydrating = false;
@@ -269,7 +276,7 @@ function applyEndGameUI(winnerName) {
   $("#booksRow").style.display = "none";
   const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "none";
-  const message = `${winnerName} wins!`;
+  const message = formatWinningMessage(winnerName);
   const status = $("#status");
   if (status) status.textContent = "";
   const winnerSection = $("#winner");
