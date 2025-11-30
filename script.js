@@ -594,8 +594,15 @@ function updateDeleteButton() {
   const deleteBtn = $("#deleteLastBtn");
   if (!deleteBtn) return;
   const hasHands = state.hands.length > 0;
-  deleteBtn.textContent = hasHands ? "Delete Last Hand" : "New Game";
-  deleteBtn.classList.toggle("button-outline", hasHands);
+  
+  // If bids are locked, show "Unlock Bid" button
+  if (state.lockedBids) {
+    deleteBtn.textContent = "Unlock Bid";
+    deleteBtn.classList.add("button-outline");
+  } else {
+    deleteBtn.textContent = hasHands ? "Delete Last Hand" : "New Game";
+    deleteBtn.classList.toggle("button-outline", hasHands);
+  }
 }
 
 function scoreHand(
@@ -1142,6 +1149,36 @@ function deleteLastHand() {
   saveState();
 }
 
+function unlockBids() {
+  if (!state.lockedBids) return;
+  state.lockedBids = false;
+  state.phase = "bids";
+  
+  // Show bid actions again
+  const lock = $("#bidsActions");
+  if (lock) lock.style.display = "";
+  const baWrap = $("#blind10A")?.closest(".spinner-actions");
+  if (baWrap) baWrap.style.display = "";
+  const bbWrap = $("#blind10B")?.closest(".spinner-actions");
+  if (bbWrap) bbWrap.style.display = "";
+  const naWrap = $("#nilA")?.closest(".spinner-actions");
+  if (naWrap) naWrap.style.display = "";
+  const nbWrap = $("#nilB")?.closest(".spinner-actions");
+  if (nbWrap) nbWrap.style.display = "";
+  const note = $("#unbidNote");
+  if (note) note.style.display = "";
+  
+  // Remove disabled class from bid spinners
+  document.querySelectorAll("#bidsRow .spinner").forEach((sp) => {
+    sp.classList.remove("disabled");
+  });
+  
+  togglePhaseUI();
+  updateDeleteButton();
+  $("#status").textContent = "Bids unlocked.";
+  saveState();
+}
+
 function endGame(winnerName) {
   state.gameOver = true;
   state.winnerName = winnerName;
@@ -1245,6 +1282,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sp.classList.add("disabled");
     });
     togglePhaseUI();
+    updateDeleteButton();
     $("#status").textContent = "Bids locked. Now set books.";
     $("#booksA").textContent = "6";
     $("#booksB").textContent = "7";
@@ -1478,7 +1516,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Other buttons
-  $("#deleteLastBtn").onclick = () => deleteLastHand();
+  $("#deleteLastBtn").onclick = () => {
+    if (state.lockedBids) {
+      unlockBids();
+    } else {
+      deleteLastHand();
+    }
+  };
   const newGameBtn = $("#newGameBtn");
   if (newGameBtn) newGameBtn.onclick = restartGame;
   const newGameBtnMain = $("#newGameBtnMain");
