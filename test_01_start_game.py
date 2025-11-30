@@ -16,6 +16,6 @@ def test_start_game_with_player_names(page: Page, app_url: str):
     # Assert that "Round 1" is visible on the next page
     expect(page.locator("#pillRound")).to_have_text("Round 1")
     
-    # Check team names are derived from player names
-    expect(page.locator("#scoreNameA")).to_have_text("Alice & Alex")
-    expect(page.locator("#scoreNameB")).to_have_text("Bob & Beth")
+    # Check team names are derived from player names with Team A/B labels
+    expect(page.locator("#scoreNameA")).to_have_text("Team A: Alice & Alex")
+    expect(page.locator("#scoreNameB")).to_have_text("Team B: Bob & Beth")

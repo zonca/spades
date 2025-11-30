@@ -365,9 +365,9 @@ function updatePills() {
   const teamB = getTeamB();
 
   const nameA = $("#scoreNameA");
-  if (nameA) nameA.textContent = teamA;
+  if (nameA) nameA.textContent = `Team A: ${teamA}`;
   const nameB = $("#scoreNameB");
-  if (nameB) nameB.textContent = teamB;
+  if (nameB) nameB.textContent = `Team B: ${teamB}`;
   const round = $("#pillRound");
   if (round) round.textContent = `Round ${state.round}`;
   const pointsA = $("#scorePointsA");
