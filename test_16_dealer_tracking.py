@@ -130,7 +130,7 @@ def test_dealer_shown_in_hands_table(page: Page, app_url: str):
 
 
 def test_team_names_derived_from_player_names(page: Page, app_url: str):
-    """Test that team names are derived as 'Player1 & Player2'."""
+    """Test that team names are derived as 'Team X: Player1 & Player2'."""
     page.goto(app_url)
     
     # Fill in player names
@@ -141,9 +141,9 @@ def test_team_names_derived_from_player_names(page: Page, app_url: str):
     
     page.click("#startBtn")
     
-    # Team names should be derived from player names
-    expect(page.locator("#scoreNameA")).to_have_text("Alice & Alex")
-    expect(page.locator("#scoreNameB")).to_have_text("Bob & Beth")
+    # Team names should be derived from player names with Team A/B labels
+    expect(page.locator("#scoreNameA")).to_have_text("Team A: Alice & Alex")
+    expect(page.locator("#scoreNameB")).to_have_text("Team B: Bob & Beth")
 
 
 def test_dealer_preserved_after_delete_last_hand(page: Page, app_url: str):
