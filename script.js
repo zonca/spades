@@ -756,6 +756,22 @@ function updateChart() {
     ctx.fillText("Win at 500", padding.left + chartWidth + 55, y500 + 4);
   }
 
+  // Draw zero line (with dashed xkcd style, same pattern as 500 line)
+  if (maxY >= 0 && minY <= 0) {
+    const y0 = getY(0);
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y0);
+    for (let x = padding.left; x <= padding.left + chartWidth; x += 10) {
+      const wobble = Math.sin(x * 0.15) * 0.8;
+      ctx.lineTo(x, y0 + wobble);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
   // Draw Team A line (blue)
   ctx.strokeStyle = "#2563eb";
   ctx.lineWidth = 3;
