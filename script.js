@@ -587,6 +587,8 @@ function updateNilButtons() {
 function updateNewGameButtons() {
   const main = $("#newGameBtnMain");
   if (main) main.style.display = state.gameOver ? "" : "none";
+  const bottom = $("#newGameBtnBottom");
+  if (bottom) bottom.style.display = state.started ? "" : "none";
   updateDeleteButton();
 }
 
@@ -1510,6 +1512,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.lockedBids = false;
     updateBlindButtons();
     updateNilButtons();
+    updateDeleteButton();
     const winner = checkWin();
     if (winner) {
       endGame(winner);
@@ -1543,6 +1546,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (newGameBtn) newGameBtn.onclick = restartGame;
   const newGameBtnMain = $("#newGameBtnMain");
   if (newGameBtnMain) newGameBtnMain.onclick = restartGame;
+  const newGameBtnBottom = $("#newGameBtnBottom");
+  if (newGameBtnBottom) newGameBtnBottom.onclick = restartGame;
 
   wireArrowButtons();
   updateBlindButtons();

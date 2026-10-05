@@ -1,3 +1,4 @@
+import pytest
 from playwright.sync_api import expect
 
 
@@ -100,3 +101,86 @@ def test_can_continue_after_unlock_bid(start_game, play_hand):
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 130")
     expect(page.locator("#pillB")).to_have_text("Bob & Beth: 130")
     expect(page.locator("#pillRound")).to_have_text("Round 3")
+
+
+def test_submit_hand_updates_undo_label_and_restores_dealer_on_delete(start_game):
+    """After submitting, the undo button deletes a hand rather than unlocking bids."""
+    page = start_game()
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    page.click("#submitHandBtn")
+    dealers = ["Alice", "Bob", "Alex", "Beth"]
+
+    for round_number in range(2, 6):
+        dealer = dealers[(round_number - 1) % 4]
+        page.click("#lockBidsBtn")
+        expect(page.locator("#deleteLastBtn")).to_have_text("Unlock Bid")
+        page.click("#submitHandBtn")
+        expect(page.locator("#pillRound")).to_have_text(f"Round {round_number + 1}")
+        expect(page.locator("#dealerDisplay")).to_have_text(
+            f"🂡 Dealer: {dealers[round_number % 4]}"
+        )
+        expect(page.locator("#deleteLastBtn")).to_have_text("Delete Last Hand")
+
+        page.click("#deleteLastBtn")
+        expect(page.locator("#pillRound")).to_have_text(f"Round {round_number}")
+        expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
+        expect(page.locator("#handsTable tbody tr")).to_have_count(2 * (round_number - 1))
+
+        # Replay the corrected hand: it must retain its original dealer.
+        page.locator("[data-for='bidA'][data-arrow='up']").click()
+        page.click("#lockBidsBtn")
+        page.click("#submitHandBtn")
+        expect(page.locator(
+            f"#handsTable tbody tr:nth-child({2 * round_number - 1}) td:nth-child(2)"
+        )).to_have_text(dealer)
+
+
+def test_dealer_preserved_when_correcting_locked_bids(start_game):
+    """Lock/unlock must keep the current dealer through a full rotation."""
+    page = start_game()
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    page.click("#submitHandBtn")
+    dealers = ["Alice", "Bob", "Alex", "Beth"]
+
+    for round_number in range(2, 6):
+        dealer = dealers[(round_number - 1) % 4]
+        expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
+        history = page.locator("#handsTable tbody").inner_text()
+        page.click("#lockBidsBtn")
+        # Also exercise resuming a match whose bids were already locked.
+        if round_number == 3:
+            page.reload()
+            page.click("#resumeBtn")
+        expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
+
+        page.click("#deleteLastBtn")  # Unlock Bid
+        expect(page.locator("#pillRound")).to_have_text(f"Round {round_number}")
+        expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
+        assert page.locator("#handsTable tbody").inner_text() == history
+
+        # Correct the bid, then lock again and complete the same hand.
+        page.locator("[data-for='bidA'][data-arrow='up']").click()
+        page.click("#lockBidsBtn")
+        expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
+        page.click("#submitHandBtn")
+        expect(page.locator("#dealerDisplay")).to_have_text(
+            f"🂡 Dealer: {dealers[round_number % 4]}"
+        )
+        expect(page.locator(
+            f"#handsTable tbody tr:nth-child({2 * round_number - 1}) td:nth-child(2)"
+        )).to_have_text(dealer)
+
+
+@pytest.mark.parametrize("click_count", [1, 2])
+def test_unlock_unsubmitted_misdeal_preserves_dealer(start_game, click_count):
+    page = start_game()
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    page.click("#submitHandBtn")
+    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Bob")
+    page.click("#lockBidsBtn")
+    # A misdeal is abandoned before submitting its result.
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    page.locator("#deleteLastBtn").click(click_count=click_count)
+    expect(page.locator("#pillRound")).to_have_text("Round 2")
+    expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Bob")
+    expect(page.locator("#handsTable tbody tr")).to_have_count(2)

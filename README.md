@@ -8,6 +8,7 @@ This project is a single-page Spades scorekeeper that helps two teams track bids
 - A saved game is stored in `localStorage` under the key `spades-scorekeeper-state-v1`. Refreshing the page resumes the last match.
 
 ## Testing
+- Run the JavaScript unit tests with `npm test` (Node.js 18 or newer).
 - Install dependencies with `uv pip install -r requirements.txt`.
 - Run the automated browser suite with `uv run pytest`.
 
