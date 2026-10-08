@@ -1,8 +1,8 @@
 # Project Overview
 
-This project is a Spades scorekeeper application. It features a web-based user interface (`index.html`) for tracking scores according to a custom set of rules defined in `rules.md`. The project also includes end-to-end tests written in Python using `pytest` and `playwright` to automate browser interactions and verify the UI's functionality.
+This project is a Spades scorekeeper application. It features a web-based user interface (`index.html` + `script.js`) for tracking scores according to a custom set of rules defined in `rules.md`. The project also includes end-to-end tests written in Python using `pytest` and `playwright` to automate browser interactions and verify the UI's functionality.
 
-A notable discrepancy exists: `rules.md` states that "All calculations must be done in Python," however, the core game logic, including scoring, is currently implemented in JavaScript directly within `index.html`.
+A notable discrepancy exists: `rules.md` states that "All calculations must be done in Python," however, the core game logic, including scoring, is currently implemented in JavaScript in `script.js`.
 
 # Building and Running
 
@@ -28,10 +28,10 @@ The application is a single-page web application. To run it, simply open `index.
 
 ## Deployment
 
-The production build is served at https://zonca.github.io/spades/.
+The production build is served at https://zonca.github.io/spades/. GitHub Pages serves the root of `main`, so pushing to `main` deploys.
 
 # Development Conventions
 
-*   **Frontend:** The user interface and game logic are implemented using HTML, CSS, and JavaScript within `index.html`.
+*   **Frontend:** Markup and CSS live in `index.html`; game logic and state live in `script.js`.
 *   **Testing:** End-to-end tests are written in Python using the `pytest` framework, leveraging `pytest-playwright` for browser automation.
-*   **Game Rules:** The specific rules for scoring and gameplay are documented in `rules.md`.
+*   **Game Rules:** The specific rules for scoring and gameplay are documented in `rules.md`. The winning score is selectable at game start (200 / 300 / 500, default 500) and stored as `state.targetScore`; use `getTargetScore()` rather than hard-coding 500.
