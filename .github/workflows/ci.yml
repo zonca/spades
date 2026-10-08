@@ -31,7 +31,7 @@ jobs:
     - name: Install uv
       run: pip install uv
     - name: Create virtual environment
-      run: uv venv
+      run: uv venv --allow-existing
     - name: Install dependencies
       run: uv pip install -r requirements.txt
     - name: Install Playwright browsers
