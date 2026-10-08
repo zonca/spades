@@ -16,7 +16,13 @@
     .scoreboard-name { font-size:1.4rem; font-weight:700; text-align:center; color:#111; position:relative; }
     .scoreboard-round { font-size:1.2rem; font-weight:600; text-align:center; color:#555; }
     .scoreboard-points { font-size:3.2rem; font-weight:800; text-align:center; line-height:1; color:#111; }
-    .scoreboard-middle { min-height:1px; }
+    .scoreboard-middle { min-height:1px; text-align:center; }
+    .scoreboard-target { font-size:1rem; font-weight:600; color:#888; }
+    .target-options { margin-bottom:16px; }
+    .target-options .button { height:auto; line-height:1.2; padding:8px 0; font-size:1.6rem; display:flex; flex-direction:column; align-items:center; }
+    .target-options .button[aria-checked="true"] { background-color:#9b4dca; border-color:#9b4dca; color:#fff; }
+    .target-options .button[aria-checked="false"] { background-color:transparent; color:#9b4dca; }
+    .target-options .button small { font-size:1rem; font-weight:400; text-transform:none; letter-spacing:0; }
     .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
     .spinner { user-select:none; display:flex; flex-direction:column; align-items:center; justify-content:center; height:auto; border-radius:14px; border:1px solid #ddd; background:#fafafa; font-size:34px; font-weight:700; position:relative; padding:8px 0; }
     .spinner .value { font-size:40px; font-weight:700; color:#111; margin:6px 0; }
@@ -105,6 +111,12 @@
           <input id="playerB2" type="text" placeholder="Player name" required />
         </div>
       </div>
+      <label>Play to</label>
+      <div id="targetScoreOptions" class="toolbar target-options" role="radiogroup" aria-label="Winning score">
+        <button type="button" class="button button-outline" data-target="200" role="radio" aria-checked="false">200<small>quick</small></button>
+        <button type="button" class="button button-outline" data-target="300" role="radio" aria-checked="false">300<small>short</small></button>
+        <button type="button" class="button" data-target="500" role="radio" aria-checked="true">500<small>standard</small></button>
+      </div>
       <div id="setupError" style="color: #dc3545; font-size: 0.9rem; margin-bottom: 8px; display: none;">Please enter all 4 player names</div>
       <div class="toolbar">
         <button id="startBtn" class="button">Start Game</button>
@@ -132,7 +144,7 @@
             <span id="scorePointsA">0</span>
             <span id="scoreBagsA" style="font-size: 2.4rem; color: #666; margin-left: 4px;"></span>
           </div>
-          <div class="scoreboard-middle"></div>
+          <div class="scoreboard-middle"><span id="targetScoreLabel" class="scoreboard-target">to 500</span></div>
           <div class="scoreboard-points">
             <span id="scorePointsB">0</span>
             <span id="scoreBagsB" style="font-size: 2.4rem; color: #666; margin-left: 4px;"></span>

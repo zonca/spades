@@ -1,5 +1,7 @@
 // Inline app logic (no external deps)
 const STORAGE_KEY = "spades-scorekeeper-state-v1";
+const DEFAULT_TARGET_SCORE = 500;
+const TARGET_SCORE_OPTIONS = [200, 300, 500];
 
 function createInitialState() {
   return {
@@ -10,6 +12,7 @@ function createInitialState() {
     playerB1: "",
     playerB2: "",
     dealerIndex: 0, // 0: A1, 1: B1, 2: A2, 3: B2
+    targetScore: DEFAULT_TARGET_SCORE,
     totalA: 0,
     totalB: 0,
     bagsA: 0,
@@ -44,6 +47,25 @@ function getTeamA() {
 
 function getTeamB() {
   return getTeamName(state.playerB1, state.playerB2, "Team B");
+}
+
+function getTargetScore() {
+  const t = Number(state.targetScore);
+  return TARGET_SCORE_OPTIONS.includes(t) ? t : DEFAULT_TARGET_SCORE;
+}
+
+function getSelectedTargetScore() {
+  const selected = document.querySelector("#targetScoreOptions [aria-checked='true']");
+  const t = Number(selected?.dataset.target);
+  return TARGET_SCORE_OPTIONS.includes(t) ? t : DEFAULT_TARGET_SCORE;
+}
+
+function selectTargetScore(target) {
+  document.querySelectorAll("#targetScoreOptions [data-target]").forEach((btn) => {
+    const active = Number(btn.dataset.target) === target;
+    btn.setAttribute("aria-checked", active ? "true" : "false");
+    btn.classList.toggle("button-outline", !active);
+  });
 }
 
 function formatWinningMessage(winnerName) {
@@ -300,6 +322,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   if (savedState.nilPrevBidA === undefined) savedState.nilPrevBidA = 6;
   if (savedState.nilPrevBidB === undefined) savedState.nilPrevBidB = 6;
   if (savedState.dealerIndex === undefined) savedState.dealerIndex = 0;
+  if (savedState.targetScore === undefined) savedState.targetScore = DEFAULT_TARGET_SCORE;
   Object.assign(state, savedState);
   if (!state.started && state.hands.length > 0) state.started = true;
 
@@ -311,6 +334,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   $("#playerA2").value = state.playerA2 || "";
   $("#playerB1").value = state.playerB1 || "";
   $("#playerB2").value = state.playerB2 || "";
+  selectTargetScore(getTargetScore());
 
   // Restore spinner values
   const ui = snapshot.ui || {};
@@ -370,6 +394,8 @@ function updatePills() {
   if (nameB) nameB.textContent = `Team B: ${teamB}`;
   const round = $("#pillRound");
   if (round) round.textContent = `Round ${state.round}`;
+  const targetLabel = $("#targetScoreLabel");
+  if (targetLabel) targetLabel.textContent = `to ${getTargetScore()}`;
   const pointsA = $("#scorePointsA");
   if (pointsA) pointsA.textContent = state.totalA;
   const pointsB = $("#scorePointsB");
@@ -643,7 +669,8 @@ function scoreHand(
 }
 
 function checkWin() {
-  if (state.totalA >= 500 || state.totalB >= 500) {
+  const target = getTargetScore();
+  if (state.totalA >= target || state.totalB >= target) {
     if (state.totalA === state.totalB) return null;
     return state.totalA > state.totalB ? getTeamA() : getTeamB();
   }
@@ -694,7 +721,8 @@ function updateChart() {
   // Find data range
   const allData = [...dataA, ...dataB];
   const minY = Math.min(0, ...allData);
-  const maxY = Math.max(500, ...allData);
+  const target = getTargetScore();
+  const maxY = Math.max(target, ...allData);
   const yRange = maxY - minY;
 
   // Helper functions
@@ -736,29 +764,29 @@ function updateChart() {
     ctx.stroke();
   }
 
-  // Draw 500-point line (with dashed xkcd style)
-  if (maxY >= 500 && minY <= 500) {
-    const y500 = getY(500);
+  // Draw target-score line (with dashed xkcd style)
+  if (maxY >= target && minY <= target) {
+    const yTarget = getY(target);
     ctx.strokeStyle = "#16a34a";
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 4]);
     ctx.beginPath();
-    ctx.moveTo(padding.left, y500);
+    ctx.moveTo(padding.left, yTarget);
     for (let x = padding.left; x <= padding.left + chartWidth; x += 10) {
       const wobble = Math.sin(x * 0.15) * 0.8;
-      ctx.lineTo(x, y500 + wobble);
+      ctx.lineTo(x, yTarget + wobble);
     }
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Label for 500 line
+    // Label for target line
     ctx.fillStyle = "#16a34a";
     ctx.font = "bold 12px 'Comic Sans MS', cursive, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText("Win at 500", padding.left + chartWidth + 55, y500 + 4);
+    ctx.fillText(`Win at ${target}`, padding.left + chartWidth + 55, yTarget + 4);
   }
 
-  // Draw zero line (with dashed xkcd style, same pattern as 500 line)
+  // Draw zero line (with dashed xkcd style, same pattern as target line)
   if (maxY >= 0 && minY <= 0) {
     const y0 = getY(0);
     ctx.strokeStyle = "#000000";
@@ -1256,6 +1284,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fresh.playerB1 = playerB1;
     fresh.playerB2 = playerB2;
     fresh.dealerIndex = 0;
+    fresh.targetScore = getSelectedTargetScore();
     Object.assign(state, fresh);
     pendingSnapshot = null;
     $("#setup").style.display = "none";
@@ -1548,6 +1577,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (newGameBtnMain) newGameBtnMain.onclick = restartGame;
   const newGameBtnBottom = $("#newGameBtnBottom");
   if (newGameBtnBottom) newGameBtnBottom.onclick = restartGame;
+
+  document.querySelectorAll("#targetScoreOptions [data-target]").forEach((btn) => {
+    btn.onclick = () => selectTargetScore(Number(btn.dataset.target));
+  });
 
   wireArrowButtons();
   updateBlindButtons();

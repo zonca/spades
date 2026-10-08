@@ -8,6 +8,8 @@ Setup
 
 At the beginning, ask for team names and player names.
 
+Also ask for the winning score: 500 (default, standard game), 300 (short game) or 200 (quick game).
+
 We only track scores at the team level, not per-player.
 
 
@@ -49,9 +51,9 @@ Match End
 
 After every hand, print final scores for both teams.
 
-First team to reach 500 points wins.
+First team to reach the winning score (500 by default) wins.
 
-If both reach 500+ in the same hand, the higher score wins. If tied, continue playing.
+If both reach the winning score in the same hand, the higher score wins. If tied, continue playing.
 
 
 Implementation Notes
