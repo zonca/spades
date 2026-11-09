@@ -15,6 +15,7 @@ function loadGame(handCount) {
       addEventListener(event, callback) {
         if (event === "DOMContentLoaded") initialize = callback;
       },
+      getElementById(id) { return this.querySelector("#" + id); },
       querySelectorAll() { return []; },
       querySelector(selector) {
         if (!elements.has(selector)) {

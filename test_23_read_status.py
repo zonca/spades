@@ -103,4 +103,98 @@ def test_unsupported_browser_explains_disabled_button(page, app_url):
     page.add_init_script("Object.defineProperty(window, 'speechSynthesis', {value: undefined})")
     page.goto(app_url)
     assert page.locator('#readStatusBtn').is_disabled()
+    expect(page.locator('#voiceModeBtn')).to_be_disabled()
     expect(page.locator('#speechStatus')).to_have_text('Reading aloud is unavailable in this browser.')
+
+
+def latest_speech(page):
+    return page.evaluate('window.spoken.at(-1).text')
+
+
+def test_voice_mode_defaults_off_toggles_and_replaces_speech(start_game):
+    page = start_game()
+    expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'false')
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    assert page.evaluate('window.spoken.length') == 0
+    page.click('#voiceModeBtn')
+    assert latest_speech(page) == 'Voice mode on.'
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    assert latest_speech(page) == 'Books: Alice and Alex, 8; Bob and Beth, 5.'
+    assert page.evaluate('window.cancelCount') == 2
+    page.click('#voiceModeBtn')
+    assert latest_speech(page) == 'Voice mode off.'
+    expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'false')
+    page.locator("[data-for='booksA'][data-arrow='down']").click()
+    assert page.evaluate('window.spoken.length') == 3
+    # Finish the off confirmation, then use the manual reader with voice mode off.
+    page.evaluate('window.spoken.at(-1).onend()')
+    assert 'Round 1' in read_status(page)
+
+
+def test_voice_confirms_game_actions(page, app_url):
+    page.goto(app_url)
+    page.click('#voiceModeBtn')
+    page.click('#startBtn')
+    assert latest_speech(page) == 'Enter all four player names before starting.'
+    assert page.evaluate('state.started') is False
+    page.click("#targetScoreOptions [data-target='300']")
+    assert latest_speech(page) == 'Winning score set to 300 points.'
+    for field, value in [('playerA1', 'Alice'), ('playerA2', 'Alex'), ('playerB1', 'Bob'), ('playerB2', 'Beth')]:
+        page.fill('#' + field, value)
+    page.click('#startBtn')
+    assert latest_speech(page).startswith('Game started. Round 1. Dealer: Alice.')
+    page.click('#submitHandBtn')
+    assert latest_speech(page).startswith('Round 1 submitted. Round 2. Dealer: Bob.')
+    page.locator("[data-for='bidA'][data-arrow='up']").click()
+    assert latest_speech(page) == 'Alice and Alex bid 7.'
+    page.click('#nilA')
+    assert latest_speech(page) == 'Alice and Alex bid nil.'
+    page.click('#nilA')
+    assert latest_speech(page) == 'Alice and Alex bid 7.'
+    page.click('#blind10B')
+    assert latest_speech(page) == 'Bob and Beth bid blind ten.'
+    page.click('#blind10B')
+    assert latest_speech(page) == f"Bob and Beth bid {page.locator('#bidB').inner_text()}."
+    page.click('#lockBidsBtn')
+    assert latest_speech(page).startswith('Bids locked. Alice and Alex bid 7. Bob and Beth bid ')
+    page.click('#deleteLastBtn')
+    assert latest_speech(page).startswith('Bids unlocked.')
+    page.click('#deleteLastBtn')
+    assert latest_speech(page).startswith('Last round undone. Round 1. Dealer: Alice.')
+
+
+def test_voice_confirms_finish_undo_reset_and_remembers_mode(start_game, play_hand):
+    page = start_game()
+    page.click('#voiceModeBtn')
+    play_hand(0, 0, 3, 10)
+    assert latest_speech(page).startswith('Round submitted. Game over. Bob and Beth win!')
+    page.click('#undoFinalRoundBtn')
+    assert latest_speech(page).startswith('Last round undone. Round 1.')
+    page.reload()
+    expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'true')
+    assert page.evaluate('window.spoken.length') == 0  # No unsolicited speech on load.
+    page.click('#resumeBtn')
+    assert latest_speech(page).startswith('Game resumed. Round 1.')
+    page.click('#newGameBtnBottom')
+    expect(page.locator('#setup')).to_be_visible()
+    expect(page.locator('#game')).to_be_hidden()
+    expect(page.locator('#newGameBtnBottom')).to_be_hidden()
+    assert latest_speech(page) == 'New game. Enter all four player names to start.'
+    assert page.evaluate('localStorage.getItem(STORAGE_KEY)') is None
+    assert page.evaluate('localStorage.getItem(VOICE_MODE_KEY)') == 'true'
+    # Resetting a game preserves the voice preference and leaves speech running.
+    expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'true')
+    page.reload()
+    expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'true')
+    assert page.evaluate('window.spoken.length') == 0
+
+
+def test_spinner_limit_does_not_confirm_a_change(start_game):
+    page = start_game()
+    page.click('#voiceModeBtn')
+    for _ in range(7):
+        page.locator("[data-for='booksA'][data-arrow='up']").click()
+    count = page.evaluate('window.spoken.length')
+    page.locator("[data-for='booksA'][data-arrow='up']").click()
+    assert page.evaluate('window.spoken.length') == count
+    expect(page.locator('#booksA')).to_have_text('13')

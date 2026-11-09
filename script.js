@@ -1,5 +1,6 @@
 // Inline app logic (no external deps)
 const STORAGE_KEY = "spades-scorekeeper-state-v1";
+const VOICE_MODE_KEY = "spades-scorekeeper-voice-mode-v1";
 const DEFAULT_TARGET_SCORE = 500;
 const TARGET_SCORE_OPTIONS = [200, 300, 500];
 
@@ -79,6 +80,9 @@ const state = createInitialState();
 let pendingSnapshot = null;
 let isHydrating = false;
 let confettiCleanup = null;
+let voiceMode = false;
+let speakGameText = () => {};
+let stopGameSpeech = () => {};
 
 const $ = (s) => document.querySelector(s);
 
@@ -133,12 +137,24 @@ function getGameStatusText() {
   return text.join(" ");
 }
 
+function confirmGameAction(message) {
+  if (voiceMode) speakGameText(message.replace(/&/g, "and"));
+}
+
+function getBidConfirmation(team) {
+  const name = team === "A" ? getTeamA() : getTeamB();
+  const bid = state[`blind10${team}`] ? "blind ten" : state[`nil${team}`] ? "nil" : getSpinnerText(`bid${team}`);
+  return `${name} bid ${bid}.`;
+}
+
 function setupStatusSpeech() {
   const button = $("#readStatusBtn");
   const notice = $("#speechStatus");
+  const toggle = $("#voiceModeBtn");
   const synth = window.speechSynthesis;
   if (!synth || typeof window.SpeechSynthesisUtterance !== "function") {
     button.disabled = true;
+    toggle.disabled = true;
     notice.textContent = "Reading aloud is unavailable in this browser.";
     notice.hidden = false;
     return;
@@ -148,14 +164,13 @@ function setupStatusSpeech() {
     current = null;
     button.textContent = "Read Game Status Aloud";
   };
-  button.onclick = () => {
-    if (current) {
-      reset();
-      synth.cancel();
-      return;
-    }
+  stopGameSpeech = () => {
+    reset();
+    synth.cancel();
+  };
+  speakGameText = (message) => {
     notice.hidden = true;
-    const utterance = new window.SpeechSynthesisUtterance(getGameStatusText());
+    const utterance = new window.SpeechSynthesisUtterance(message);
     utterance.lang = "en-US";
     utterance.onend = () => {
       if (current === utterance) reset();
@@ -177,10 +192,32 @@ function setupStatusSpeech() {
       utterance.onerror({ error: "unavailable" });
     }
   };
-  window.addEventListener("pagehide", () => {
-    reset();
-    synth.cancel();
-  });
+  button.onclick = () => {
+    if (current) stopGameSpeech();
+    else speakGameText(getGameStatusText());
+  };
+  const updateToggle = () => {
+    toggle.textContent = `Voice Mode: ${voiceMode ? "On" : "Off"}`;
+    toggle.setAttribute("aria-pressed", String(voiceMode));
+    toggle.classList.toggle("button-outline", !voiceMode);
+  };
+  try {
+    voiceMode = window.localStorage.getItem(VOICE_MODE_KEY) === "true";
+  } catch {
+    // Voice mode still works when browser storage is unavailable.
+  }
+  updateToggle();
+  toggle.onclick = () => {
+    voiceMode = !voiceMode;
+    try {
+      window.localStorage.setItem(VOICE_MODE_KEY, String(voiceMode));
+    } catch {
+      // Keep the preference for this page session.
+    }
+    updateToggle();
+    speakGameText(`Voice mode ${voiceMode ? "on" : "off"}.`);
+  };
+  window.addEventListener("pagehide", stopGameSpeech);
 }
 
 function updateDealerDisplay() {
@@ -373,9 +410,21 @@ function clearStoredState() {
 function restartGame() {
   stopConfetti();
   clearStoredState();
-  if (typeof window !== "undefined" && typeof window.location !== "undefined") {
-    window.location.reload();
-  }
+  stopGameSpeech();
+  Object.assign(state, createInitialState());
+  pendingSnapshot = null;
+  $("#setup").style.display = "";
+  $("#game").style.display = "none";
+  $("#winner").style.display = "none";
+  $("#resumeBtn").style.display = "none";
+  $("#setupError").style.display = "none";
+  ["playerA1", "playerA2", "playerB1", "playerB2"].forEach((id) => {
+    $("#" + id).value = "";
+  });
+  selectTargetScore(DEFAULT_TARGET_SCORE);
+  renderHands();
+  updateNewGameButtons();
+  confirmGameAction("New game. Enter all four player names to start.");
 }
 
 function applyEndGameUI(winnerName) {
@@ -547,10 +596,15 @@ function setValueFor(id, delta) {
   const spinner = vEl.closest(".spinner");
   const min = +spinner.dataset.min,
     max = +spinner.dataset.max;
-  const next = clamp((+vEl.textContent || 0) + delta, min, max);
+  const previous = +vEl.textContent || 0;
+  const next = clamp(previous + delta, min, max);
+  if (next === previous) return;
   vEl.textContent = String(next);
   onSpinnerChange(spinner, next, { link: id === "booksA" || id === "booksB" });
   saveState();
+  confirmGameAction(id.startsWith("books")
+    ? `Books: ${getTeamA()}, ${getSpinnerText("booksA")}; ${getTeamB()}, ${getSpinnerText("booksB")}.`
+    : getBidConfirmation(id.endsWith("A") ? "A" : "B"));
 }
 
 function wireArrowButtons() {
@@ -1285,6 +1339,7 @@ function deleteLastHand() {
   updateBooksSum();
   $("#status").textContent = "Deleted last hand.";
   saveState();
+  confirmGameAction(`Last round undone. ${getGameStatusText()}`);
 }
 
 function unlockBids() {
@@ -1315,6 +1370,7 @@ function unlockBids() {
   updateDeleteButton();
   $("#status").textContent = "Bids unlocked.";
   saveState();
+  confirmGameAction("Bids unlocked. You can change the bids.");
 }
 
 function endGame(winnerName) {
@@ -1322,6 +1378,7 @@ function endGame(winnerName) {
   state.winnerName = winnerName;
   applyEndGameUI(winnerName);
   saveState();
+  confirmGameAction(`Round submitted. ${getGameStatusText()}`);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1339,6 +1396,7 @@ document.addEventListener("DOMContentLoaded", () => {
       resumeBtn.onclick = () => {
         applySnapshot(pendingSnapshot);
         resumeBtn.style.display = "none";
+        confirmGameAction(`Game resumed. ${getGameStatusText()}`);
       };
       const automation =
         typeof navigator !== "undefined" && navigator.webdriver === true;
@@ -1362,6 +1420,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Validate all 4 player names are provided
     if (!playerA1 || !playerA2 || !playerB1 || !playerB2) {
       if (errorEl) errorEl.style.display = "";
+      confirmGameAction("Enter all four player names before starting.");
       return;
     }
     
@@ -1398,6 +1457,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (actions) actions.style.display = "";
     saveState();
     if (resumeBtn) resumeBtn.style.display = "none";
+    confirmGameAction(`Game started. ${getGameStatusText()}`);
   };
 
   // Lock bids
@@ -1427,6 +1487,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#booksB").textContent = "7";
     updateBooksSum();
     saveState();
+    confirmGameAction("Bids locked. " + getBidConfirmation("A") + " " + getBidConfirmation("B") + " Set books next.");
   };
 
   // Blind 10 toggles
@@ -1445,6 +1506,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUnbidNote();
     togglePhaseUI();
     saveState();
+    confirmGameAction(getBidConfirmation("A"));
   };
   $("#blind10B").onclick = () => {
     state.blind10B = !state.blind10B;
@@ -1461,6 +1523,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUnbidNote();
     togglePhaseUI();
     saveState();
+    confirmGameAction(getBidConfirmation("B"));
   };
 
   // Nil toggles
@@ -1489,6 +1552,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBlindButtons();
     updateUnbidNote();
     saveState();
+    confirmGameAction(getBidConfirmation("A"));
   };
   $("#nilB").onclick = () => {
     if (state.phase !== "bids" || state.lockedBids) return;
@@ -1515,6 +1579,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBlindButtons();
     updateUnbidNote();
     saveState();
+    confirmGameAction(getBidConfirmation("B"));
   };
 
   // Submit hand
@@ -1526,6 +1591,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const booksB = +$("#booksB").textContent;
     if (booksA + booksB !== 13) {
       $("#status").textContent = "Books must sum to 13";
+      confirmGameAction("Round not submitted. Books must sum to thirteen.");
       return;
     }
     const {
@@ -1653,6 +1719,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBooksSum();
     $("#status").textContent = "Next round: set bids first.";
     saveState();
+    confirmGameAction(`Round ${state.round - 1} submitted. ${getGameStatusText()}`);
   };
 
   // Other buttons
@@ -1675,7 +1742,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (newGameBtnBottom) newGameBtnBottom.onclick = restartGame;
 
   document.querySelectorAll("#targetScoreOptions [data-target]").forEach((btn) => {
-    btn.onclick = () => selectTargetScore(Number(btn.dataset.target));
+    btn.onclick = () => {
+      selectTargetScore(Number(btn.dataset.target));
+      confirmGameAction(`Winning score set to ${getSelectedTargetScore()} points.`);
+    };
   });
 
   wireArrowButtons();

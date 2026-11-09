@@ -88,6 +88,10 @@
 </head>
 <body>
   <div class="container">
+    <div class="toolbar">
+      <button id="voiceModeBtn" type="button" class="button button-outline" aria-pressed="false">Voice Mode: Off</button>
+    </div>
+    <p id="speechStatus" role="status" hidden></p>
     <section id="setup" class="card">
       <h5>New Game</h5>
       <p style="font-size: 0.9rem; color: #666; margin-bottom: 12px;">Enter all 4 player names to start</p>
@@ -155,7 +159,6 @@
       <div class="toolbar">
         <button id="readStatusBtn" class="button button-outline" type="button">Read Game Status Aloud</button>
       </div>
-      <p id="speechStatus" role="status" hidden></p>
 
       <div id="dealerRow" style="display:none;">
         <p id="dealerDisplay" style="font-size:1.5rem; font-weight:700; color:#333; margin-bottom:12px;"></p>
