@@ -102,39 +102,23 @@ function getDealerName(dealerIndex) {
   }
 }
 
+function getScoreStatusText() {
+  return ["A", "B"].map((team) => {
+    const name = (team === "A" ? getTeamA() : getTeamB()).replace(/&/g, "and");
+    const bags = state[`bags${team}`];
+    return `${name}: ${state[`total${team}`]} points${bags ? `, ${bags} bags` : ""}.`;
+  }).join(" ");
+}
+
 function getGameStatusText() {
-  const teamA = getTeamA().replace(/&/g, "and");
-  const teamB = getTeamB().replace(/&/g, "and");
-  const lastHand = state.hands[state.hands.length - 1];
   const text = [
-    state.gameOver ? `Game over. ${formatWinningMessage(state.winnerName).replace(/&/g, "and")} Final round ${lastHand?.round || state.round}. Dealer: ${lastHand?.dealer || getDealerName(state.dealerIndex)}.` : `Round ${state.round}. Dealer: ${getDealerName(state.dealerIndex)}.`,
-    `Playing to ${getTargetScore()} points.`,
-    `${teamA}: ${state.totalA} points, ${state.bagsA} bags.`,
-    `${teamB}: ${state.totalB} points, ${state.bagsB} bags.`,
+    state.gameOver ? formatWinningMessage(state.winnerName).replace(/&/g, "and") : `Round ${state.round}. Dealer: ${getDealerName(state.dealerIndex)}.`,
+    getScoreStatusText(),
   ];
-  const hand = state.gameOver ? lastHand : null;
-  const round = hand ? hand.round : state.round;
-  if (round > 1) {
-    text.push(state.gameOver ? "Final round bids." : state.lockedBids ? "Bids locked." : "Bids being entered, not yet locked.");
-    const bidA = hand ? hand.bidA : getSpinnerText("bidA");
-    const bidB = hand ? hand.bidB : getSpinnerText("bidB");
-    const blindA = hand ? hand.blindA : state.blind10A;
-    const blindB = hand ? hand.blindB : state.blind10B;
-    const nilA = hand ? hand.nilA : state.nilA;
-    const nilB = hand ? hand.nilB : state.nilB;
-    text.push(`${teamA} bid ${blindA ? "blind ten" : nilA ? "nil" : bidA}.`);
-    text.push(`${teamB} bid ${blindB ? "blind ten" : nilB ? "nil" : bidB}.`);
-  } else {
-    text.push("First round: no bids.");
+  if (!state.gameOver && state.round > 1 && state.lockedBids) {
+    text.push("Bids locked.", getBidConfirmation("A"), getBidConfirmation("B"));
   }
-  if (state.gameOver && hand) {
-    text.push(`Final round books: ${teamA}, ${hand.booksA}; ${teamB}, ${hand.booksB}.`);
-  } else if (state.phase === "books") {
-    text.push(`Books entered, not yet submitted: ${teamA}, ${getSpinnerText("booksA")}; ${teamB}, ${getSpinnerText("booksB")}.`);
-  } else {
-    text.push("Waiting for bids to be locked before entering books.");
-  }
-  return text.join(" ");
+  return text.join(" ").replace(/&/g, "and");
 }
 
 function confirmGameAction(message) {
@@ -424,7 +408,7 @@ function restartGame() {
   selectTargetScore(DEFAULT_TARGET_SCORE);
   renderHands();
   updateNewGameButtons();
-  confirmGameAction("New game. Enter all four player names to start.");
+  confirmGameAction("New game.");
 }
 
 function applyEndGameUI(winnerName) {
@@ -603,7 +587,7 @@ function setValueFor(id, delta) {
   onSpinnerChange(spinner, next, { link: id === "booksA" || id === "booksB" });
   saveState();
   confirmGameAction(id.startsWith("books")
-    ? `Books: ${getTeamA()}, ${getSpinnerText("booksA")}; ${getTeamB()}, ${getSpinnerText("booksB")}.`
+    ? `${id.endsWith("A") ? getTeamA() : getTeamB()} books ${next}.`
     : getBidConfirmation(id.endsWith("A") ? "A" : "B"));
 }
 
@@ -1339,7 +1323,7 @@ function deleteLastHand() {
   updateBooksSum();
   $("#status").textContent = "Deleted last hand.";
   saveState();
-  confirmGameAction(`Last round undone. ${getGameStatusText()}`);
+  confirmGameAction(`Round ${state.round} undone.`);
 }
 
 function unlockBids() {
@@ -1370,7 +1354,7 @@ function unlockBids() {
   updateDeleteButton();
   $("#status").textContent = "Bids unlocked.";
   saveState();
-  confirmGameAction("Bids unlocked. You can change the bids.");
+  confirmGameAction("Bids unlocked.");
 }
 
 function endGame(winnerName) {
@@ -1378,7 +1362,7 @@ function endGame(winnerName) {
   state.winnerName = winnerName;
   applyEndGameUI(winnerName);
   saveState();
-  confirmGameAction(`Round submitted. ${getGameStatusText()}`);
+  confirmGameAction(`${formatWinningMessage(state.winnerName)} ${getScoreStatusText()}`);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1396,7 +1380,7 @@ document.addEventListener("DOMContentLoaded", () => {
       resumeBtn.onclick = () => {
         applySnapshot(pendingSnapshot);
         resumeBtn.style.display = "none";
-        confirmGameAction(`Game resumed. ${getGameStatusText()}`);
+        confirmGameAction(state.gameOver ? getGameStatusText() : `Game resumed. Round ${state.round}. Dealer: ${getDealerName(state.dealerIndex)}.`);
       };
       const automation =
         typeof navigator !== "undefined" && navigator.webdriver === true;
@@ -1420,7 +1404,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Validate all 4 player names are provided
     if (!playerA1 || !playerA2 || !playerB1 || !playerB2) {
       if (errorEl) errorEl.style.display = "";
-      confirmGameAction("Enter all four player names before starting.");
+      confirmGameAction("Enter all four player names.");
       return;
     }
     
@@ -1457,7 +1441,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (actions) actions.style.display = "";
     saveState();
     if (resumeBtn) resumeBtn.style.display = "none";
-    confirmGameAction(`Game started. ${getGameStatusText()}`);
+    confirmGameAction(`Playing to ${getTargetScore()}. ${getDealerName(state.dealerIndex)} deals.`);
   };
 
   // Lock bids
@@ -1487,7 +1471,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#booksB").textContent = "7";
     updateBooksSum();
     saveState();
-    confirmGameAction("Bids locked. " + getBidConfirmation("A") + " " + getBidConfirmation("B") + " Set books next.");
+    confirmGameAction("Bids locked.");
   };
 
   // Blind 10 toggles
@@ -1719,7 +1703,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBooksSum();
     $("#status").textContent = "Next round: set bids first.";
     saveState();
-    confirmGameAction(`Round ${state.round - 1} submitted. ${getGameStatusText()}`);
+    confirmGameAction(`Round ${state.round - 1} saved. ${getScoreStatusText()}`);
   };
 
   // Other buttons
@@ -1744,7 +1728,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#targetScoreOptions [data-target]").forEach((btn) => {
     btn.onclick = () => {
       selectTargetScore(Number(btn.dataset.target));
-      confirmGameAction(`Winning score set to ${getSelectedTargetScore()} points.`);
+      confirmGameAction(`Playing to ${getSelectedTargetScore()}.`);
     };
   });
 

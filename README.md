@@ -15,11 +15,11 @@ During a match, use **Delete Last Hand** to correct the previous round or **Unlo
 
 ## Read Game Status Aloud
 
-Use **Read Game Status Aloud** below the scoreboard to hear the current round, dealer, winning target, scores, bags, bids, and books. Draft entries are identified as unsubmitted. Finished games announce the winner and final round. Press **Stop Reading** to stop playback. Speech uses the browser's text-to-speech support; voice availability depends on the device.
+Use **Read Game Status Aloud** below the scoreboard to hear the current round, dealer, and scores, plus bags when nonzero and bids once locked. Draft bids and books are omitted. Finished games announce only the winner and scores. Press **Stop Reading** to stop playback. Speech uses the browser's text-to-speech support; voice availability depends on the device.
 
 ## Voice Mode
 
-Turn **Voice Mode** on at the top of the page for spoken confirmations when changing bids or books, locking or unlocking bids, submitting or undoing rounds, choosing the winning score, and starting, resuming, or resetting a game. It starts off and remembers your choice on this device. New confirmations replace previous speech so rapid taps do not build up a queue. The read-aloud button works in either mode.
+Turn **Voice Mode** on at the top of the page for spoken confirmations when changing bids or books, locking or unlocking bids, submitting or undoing rounds, choosing the winning score, and starting, resuming, or resetting a game. It starts off and remembers your choice on this device. Confirmations describe only the action or changed value; submitting a round also reads the scores. New confirmations replace previous speech so rapid taps do not build up a queue. The read-aloud button works in either mode.
 
 ## Winning Score
 At game start, choose how many points the game is played to:

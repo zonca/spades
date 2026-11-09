@@ -32,11 +32,12 @@ def test_first_round_status_and_mobile_button(start_game):
     assert box['x'] >= 0 and box['x'] + box['width'] <= 375
     text = read_status(page)
     assert 'Round 1. Dealer: Alice.' in text
-    assert 'Playing to 500 points.' in text
-    assert 'Alice and Alex: 0 points, 0 bags.' in text
-    assert 'Bob and Beth: 0 points, 0 bags.' in text
-    assert 'First round: no bids.' in text
-    assert 'not yet submitted: Alice and Alex, 6; Bob and Beth, 7.' in text
+    assert 'Alice and Alex: 0 points.' in text
+    assert 'Bob and Beth: 0 points.' in text
+    assert 'bid' not in text.lower()
+    assert 'books' not in text.lower()
+    assert 'bags' not in text
+    assert len(text.split()) < 25
 
 
 def test_status_tracks_bids_books_special_bids_and_resume(start_game, play_hand):
@@ -46,18 +47,18 @@ def test_status_tracks_bids_books_special_bids_and_resume(start_game, play_hand)
     page.click('#blind10B')
     text = read_status(page)
     assert 'Dealer: Bob.' in text
-    assert 'Alice and Alex: 70 points, 0 bags.' in text
-    assert 'Bob and Beth: 60 points, 0 bags.' in text
-    assert 'Bids being entered, not yet locked.' in text
-    assert 'Alice and Alex bid nil.' in text
-    assert 'Bob and Beth bid blind ten.' in text
+    assert 'Alice and Alex: 70 points.' in text
+    assert 'Bob and Beth: 60 points.' in text
+    assert 'bid' not in text.lower()
+    assert 'nil' not in text
+    assert 'blind' not in text
     assert 'Books entered' not in text
     page.click('#lockBidsBtn')
     page.reload()
     page.click('#resumeBtn')
     text = read_status(page)
     assert 'Bids locked.' in text
-    assert 'not yet submitted:' in text
+    assert 'books' not in text.lower()
     assert 'bid nil.' in text
     assert 'bid blind ten.' in text
 
@@ -69,17 +70,18 @@ def test_finished_status_then_undo(start_game, play_hand):
     play_hand(10, 4, 10, 3)
     play_hand(10, 4, 10, 3)
     text = read_status(page)
-    assert 'Game over. Alice and Alex win!' in text
-    assert 'Final round 3. Dealer: Alex.' in text
-    assert 'Alice and Alex: 270 points, 0 bags.' in text
-    assert 'Bob and Beth: -20 points, 0 bags.' in text
-    assert 'Final round books: Alice and Alex, 10; Bob and Beth, 3.' in text
+    assert 'Alice and Alex win!' in text
+    assert 'Dealer' not in text
+    assert 'Alice and Alex: 270 points.' in text
+    assert 'Bob and Beth: -20 points.' in text
+    assert 'books' not in text.lower()
+    assert 'bid' not in text.lower()
     assert 'not yet' not in text
     page.click('#undoFinalRoundBtn')
     text = read_status(page)
     assert 'Game over' not in text
-    assert 'Alice and Alex: 170 points, 0 bags.' in text
-    assert 'Bids being entered' in text
+    assert 'Alice and Alex: 170 points.' in text
+    assert 'bid' not in text.lower()
 
 
 def test_stop_retry_and_speech_failure(start_game):
@@ -119,7 +121,7 @@ def test_voice_mode_defaults_off_toggles_and_replaces_speech(start_game):
     page.click('#voiceModeBtn')
     assert latest_speech(page) == 'Voice mode on.'
     page.locator("[data-for='booksA'][data-arrow='up']").click()
-    assert latest_speech(page) == 'Books: Alice and Alex, 8; Bob and Beth, 5.'
+    assert latest_speech(page) == 'Alice and Alex books 8.'
     assert page.evaluate('window.cancelCount') == 2
     page.click('#voiceModeBtn')
     assert latest_speech(page) == 'Voice mode off.'
@@ -135,16 +137,16 @@ def test_voice_confirms_game_actions(page, app_url):
     page.goto(app_url)
     page.click('#voiceModeBtn')
     page.click('#startBtn')
-    assert latest_speech(page) == 'Enter all four player names before starting.'
+    assert latest_speech(page) == 'Enter all four player names.'
     assert page.evaluate('state.started') is False
     page.click("#targetScoreOptions [data-target='300']")
-    assert latest_speech(page) == 'Winning score set to 300 points.'
+    assert latest_speech(page) == 'Playing to 300.'
     for field, value in [('playerA1', 'Alice'), ('playerA2', 'Alex'), ('playerB1', 'Bob'), ('playerB2', 'Beth')]:
         page.fill('#' + field, value)
     page.click('#startBtn')
-    assert latest_speech(page).startswith('Game started. Round 1. Dealer: Alice.')
+    assert latest_speech(page) == 'Playing to 300. Alice deals.'
     page.click('#submitHandBtn')
-    assert latest_speech(page).startswith('Round 1 submitted. Round 2. Dealer: Bob.')
+    assert latest_speech(page) == 'Round 1 saved. Alice and Alex: 60 points. Bob and Beth: 70 points.'
     page.locator("[data-for='bidA'][data-arrow='up']").click()
     assert latest_speech(page) == 'Alice and Alex bid 7.'
     page.click('#nilA')
@@ -156,20 +158,20 @@ def test_voice_confirms_game_actions(page, app_url):
     page.click('#blind10B')
     assert latest_speech(page) == f"Bob and Beth bid {page.locator('#bidB').inner_text()}."
     page.click('#lockBidsBtn')
-    assert latest_speech(page).startswith('Bids locked. Alice and Alex bid 7. Bob and Beth bid ')
+    assert latest_speech(page) == 'Bids locked.'
     page.click('#deleteLastBtn')
     assert latest_speech(page).startswith('Bids unlocked.')
     page.click('#deleteLastBtn')
-    assert latest_speech(page).startswith('Last round undone. Round 1. Dealer: Alice.')
+    assert latest_speech(page) == 'Round 1 undone.'
 
 
 def test_voice_confirms_finish_undo_reset_and_remembers_mode(start_game, play_hand):
     page = start_game()
     page.click('#voiceModeBtn')
     play_hand(0, 0, 3, 10)
-    assert latest_speech(page).startswith('Round submitted. Game over. Bob and Beth win!')
+    assert latest_speech(page).startswith('Bob and Beth win!')
     page.click('#undoFinalRoundBtn')
-    assert latest_speech(page).startswith('Last round undone. Round 1.')
+    assert latest_speech(page) == 'Round 1 undone.'
     page.reload()
     expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'true')
     assert page.evaluate('window.spoken.length') == 0  # No unsolicited speech on load.
@@ -179,7 +181,7 @@ def test_voice_confirms_finish_undo_reset_and_remembers_mode(start_game, play_ha
     expect(page.locator('#setup')).to_be_visible()
     expect(page.locator('#game')).to_be_hidden()
     expect(page.locator('#newGameBtnBottom')).to_be_hidden()
-    assert latest_speech(page) == 'New game. Enter all four player names to start.'
+    assert latest_speech(page) == 'New game.'
     assert page.evaluate('localStorage.getItem(STORAGE_KEY)') is None
     assert page.evaluate('localStorage.getItem(VOICE_MODE_KEY)') == 'true'
     # Resetting a game preserves the voice preference and leaves speech running.
