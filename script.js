@@ -112,11 +112,11 @@ function getScoreStatusText() {
 
 function getGameStatusText() {
   const text = [
-    state.gameOver ? formatWinningMessage(state.winnerName).replace(/&/g, "and") : `Round ${state.round}. Dealer: ${getDealerName(state.dealerIndex)}.`,
+    state.gameOver ? formatWinningMessage(state.winnerName).replace(/&/g, "and") : `${getDealerName(state.dealerIndex)} deals.`,
     getScoreStatusText(),
   ];
   if (!state.gameOver && state.round > 1 && state.lockedBids) {
-    text.push("Bids locked.", getBidConfirmation("A"), getBidConfirmation("B"));
+    text.push(getLockedBidsConfirmation());
   }
   return text.join(" ").replace(/&/g, "and");
 }
@@ -129,6 +129,10 @@ function getBidConfirmation(team) {
   const name = team === "A" ? getTeamA() : getTeamB();
   const bid = state[`blind10${team}`] ? "blind ten" : state[`nil${team}`] ? "nil" : getSpinnerText(`bid${team}`);
   return `${name} bid ${bid}.`;
+}
+
+function getLockedBidsConfirmation() {
+  return `Bids locked. ${getBidConfirmation("A")} ${getBidConfirmation("B")}`;
 }
 
 function setupStatusSpeech() {
@@ -1323,7 +1327,7 @@ function deleteLastHand() {
   updateBooksSum();
   $("#status").textContent = "Deleted last hand.";
   saveState();
-  confirmGameAction(`Round ${state.round} undone.`);
+  confirmGameAction("Last round undone.");
 }
 
 function unlockBids() {
@@ -1380,7 +1384,7 @@ document.addEventListener("DOMContentLoaded", () => {
       resumeBtn.onclick = () => {
         applySnapshot(pendingSnapshot);
         resumeBtn.style.display = "none";
-        confirmGameAction(state.gameOver ? getGameStatusText() : `Game resumed. Round ${state.round}. Dealer: ${getDealerName(state.dealerIndex)}.`);
+        confirmGameAction(state.gameOver ? getGameStatusText() : `Game resumed. ${getDealerName(state.dealerIndex)} deals.`);
       };
       const automation =
         typeof navigator !== "undefined" && navigator.webdriver === true;
@@ -1471,7 +1475,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#booksB").textContent = "7";
     updateBooksSum();
     saveState();
-    confirmGameAction("Bids locked.");
+    confirmGameAction(getLockedBidsConfirmation());
   };
 
   // Blind 10 toggles
@@ -1575,7 +1579,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const booksB = +$("#booksB").textContent;
     if (booksA + booksB !== 13) {
       $("#status").textContent = "Books must sum to 13";
-      confirmGameAction("Round not submitted. Books must sum to thirteen.");
       return;
     }
     const {
@@ -1703,7 +1706,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateBooksSum();
     $("#status").textContent = "Next round: set bids first.";
     saveState();
-    confirmGameAction(`Round ${state.round - 1} saved. ${getScoreStatusText()}`);
+    confirmGameAction(`Saved. ${getScoreStatusText()}`);
   };
 
   // Other buttons

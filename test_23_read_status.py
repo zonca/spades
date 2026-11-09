@@ -31,7 +31,8 @@ def test_first_round_status_and_mobile_button(start_game):
     box = page.locator('#readStatusBtn').bounding_box()
     assert box['x'] >= 0 and box['x'] + box['width'] <= 375
     text = read_status(page)
-    assert 'Round 1. Dealer: Alice.' in text
+    assert text.startswith('Alice deals.')
+    assert 'round' not in text.lower()
     assert 'Alice and Alex: 0 points.' in text
     assert 'Bob and Beth: 0 points.' in text
     assert 'bid' not in text.lower()
@@ -46,7 +47,8 @@ def test_status_tracks_bids_books_special_bids_and_resume(start_game, play_hand)
     page.click('#nilA')
     page.click('#blind10B')
     text = read_status(page)
-    assert 'Dealer: Bob.' in text
+    assert text.startswith('Bob deals.')
+    assert 'round' not in text.lower()
     assert 'Alice and Alex: 70 points.' in text
     assert 'Bob and Beth: 60 points.' in text
     assert 'bid' not in text.lower()
@@ -130,7 +132,7 @@ def test_voice_mode_defaults_off_toggles_and_replaces_speech(start_game):
     assert page.evaluate('window.spoken.length') == 3
     # Finish the off confirmation, then use the manual reader with voice mode off.
     page.evaluate('window.spoken.at(-1).onend()')
-    assert 'Round 1' in read_status(page)
+    assert read_status(page).startswith('Alice deals.')
 
 
 def test_voice_confirms_game_actions(page, app_url):
@@ -146,7 +148,7 @@ def test_voice_confirms_game_actions(page, app_url):
     page.click('#startBtn')
     assert latest_speech(page) == 'Playing to 300. Alice deals.'
     page.click('#submitHandBtn')
-    assert latest_speech(page) == 'Round 1 saved. Alice and Alex: 60 points. Bob and Beth: 70 points.'
+    assert latest_speech(page) == 'Saved. Alice and Alex: 60 points. Bob and Beth: 70 points.'
     page.locator("[data-for='bidA'][data-arrow='up']").click()
     assert latest_speech(page) == 'Alice and Alex bid 7.'
     page.click('#nilA')
@@ -158,11 +160,11 @@ def test_voice_confirms_game_actions(page, app_url):
     page.click('#blind10B')
     assert latest_speech(page) == f"Bob and Beth bid {page.locator('#bidB').inner_text()}."
     page.click('#lockBidsBtn')
-    assert latest_speech(page) == 'Bids locked.'
+    assert latest_speech(page) == f"Bids locked. Alice and Alex bid 7. Bob and Beth bid {page.locator('#bidB').inner_text()}."
     page.click('#deleteLastBtn')
     assert latest_speech(page).startswith('Bids unlocked.')
     page.click('#deleteLastBtn')
-    assert latest_speech(page) == 'Round 1 undone.'
+    assert latest_speech(page) == 'Last round undone.'
 
 
 def test_voice_confirms_finish_undo_reset_and_remembers_mode(start_game, play_hand):
@@ -171,12 +173,12 @@ def test_voice_confirms_finish_undo_reset_and_remembers_mode(start_game, play_ha
     play_hand(0, 0, 3, 10)
     assert latest_speech(page).startswith('Bob and Beth win!')
     page.click('#undoFinalRoundBtn')
-    assert latest_speech(page) == 'Round 1 undone.'
+    assert latest_speech(page) == 'Last round undone.'
     page.reload()
     expect(page.locator('#voiceModeBtn')).to_have_attribute('aria-pressed', 'true')
     assert page.evaluate('window.spoken.length') == 0  # No unsolicited speech on load.
     page.click('#resumeBtn')
-    assert latest_speech(page).startswith('Game resumed. Round 1.')
+    assert latest_speech(page) == 'Game resumed. Alice deals.'
     page.click('#newGameBtnBottom')
     expect(page.locator('#setup')).to_be_visible()
     expect(page.locator('#game')).to_be_hidden()
@@ -200,3 +202,13 @@ def test_spinner_limit_does_not_confirm_a_change(start_game):
     page.locator("[data-for='booksA'][data-arrow='up']").click()
     assert page.evaluate('window.spoken.length') == count
     expect(page.locator('#booksA')).to_have_text('13')
+
+
+def test_lock_confirmation_names_special_bids(start_game, play_hand):
+    page = start_game()
+    play_hand(0, 0, 7, 6)
+    page.click('#nilA')
+    page.click('#blind10B')
+    page.click('#voiceModeBtn')
+    page.click('#lockBidsBtn')
+    assert latest_speech(page) == 'Bids locked. Alice and Alex bid nil. Bob and Beth bid blind ten.'
