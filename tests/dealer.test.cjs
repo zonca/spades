@@ -85,7 +85,7 @@ test("repeated deletions restore the dealer all the way to round one", () => {
   }
 });
 
-test("submitting a locked hand updates the undo label to match its action", () => {
+test("submitting a locked hand hides the separate unlock control", () => {
   const game = loadGame(1);
   game.initialize();
   game.run(`
@@ -97,11 +97,11 @@ test("submitting a locked hand updates the undo label to match its action", () =
     $("#booksB").textContent = "7";
     $("#lockBidsBtn").onclick();
   `);
-  assert.equal(game.dealerDisplay.get("#deleteLastBtn").textContent, "Unlock Bid");
+  assert.equal(game.dealerDisplay.get("#unlockBidsBtn").style.display, "");
   game.run('$("#submitHandBtn").onclick()');
   assert.equal(game.run("state.round"), 3);
   assert.equal(game.run("state.dealerIndex"), 2);
-  assert.equal(game.dealerDisplay.get("#deleteLastBtn").textContent, "Delete Last Hand");
+  assert.equal(game.dealerDisplay.get("#unlockBidsBtn").style.display, "none");
   game.run('$("#deleteLastBtn").onclick()');
   assert.equal(game.run("state.round"), 2);
   assert.equal(game.run("state.dealerIndex"), 1);

@@ -9,6 +9,10 @@ The live app is served at https://zonca.github.io/spades/.
 - Enter the four player names (teams are formed from them), pick the winning score, then track bids/books; the app applies the custom rules (blind 10, nil, round-one sudden loss, bag penalties) automatically.
 - A saved game is stored in `localStorage` under the key `spades-scorekeeper-state-v1`. Refreshing the page resumes the last match.
 
+## Correcting a Round
+
+Use **Undo Last Round** below the hand controls to remove the latest submitted round and enter corrected numbers. Scores, bags, and the dealer return to their previous values. Undo also works with locked bids or after a win, and the corrected state is saved when you reload. **Unlock Bid** separately lets you change bids for the current, unsubmitted round.
+
 ## Winning Score
 At game start, choose how many points the game is played to:
 

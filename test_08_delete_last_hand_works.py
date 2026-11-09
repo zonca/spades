@@ -32,7 +32,7 @@ def test_delete_last_hand_works(start_game):
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 70")
     expect(page.locator("#pillB")).to_have_text("Bob & Beth: 60")
     expect(page.locator("#pillRound")).to_have_text("Round 2")
-    expect(page.locator("#status")).to_have_text("Deleted last hand.")
+    expect(page.locator("#status")).to_have_text("Last round undone. Enter the corrected numbers.")
 
     # Verify that the game state is correct after deletion
     # (e.g., bids are reset, phase is 'bids' for the current round)
