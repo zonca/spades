@@ -22,7 +22,7 @@ def test_after_delete_last_hand_everything_works_fine(start_game, play_hand):
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 70")
     expect(page.locator("#pillB")).to_have_text("Bob & Beth: 60")
     expect(page.locator("#pillRound")).to_have_text("Round 2")
-    expect(page.locator("#status")).to_have_text("Last round undone. Enter the corrected numbers.")
+    expect(page.locator("#status")).to_have_text("Deleted last hand.")
 
     # Play another hand in Round 2
     play_hand(6, 7, 6, 7)

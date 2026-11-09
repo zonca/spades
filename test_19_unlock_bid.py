@@ -1,8 +1,9 @@
+import pytest
 from playwright.sync_api import expect
 
 
 def test_unlock_bid_button_appears_when_bids_locked(start_game, play_hand):
-    """Unlocking bids and undoing a round have separate controls."""
+    """Test that the delete button shows 'Unlock Bid' when bids are locked."""
     page = start_game()
 
     # Round 1 - Submit a hand
@@ -14,14 +15,14 @@ def test_unlock_bid_button_appears_when_bids_locked(start_game, play_hand):
 
     # Round 2 - Lock bids
     expect(page.locator("#pillRound")).to_have_text("Round 2")
-    expect(page.locator("#deleteLastBtn")).to_have_text("Undo Last Round")
+    expect(page.locator("#deleteLastBtn")).to_have_text("Delete Last Hand")
     
     # Lock the bids
     page.click("#lockBidsBtn")
     expect(page.locator("#status")).to_have_text("Bids locked. Now set books.")
     
-    # Unlocking bids keeps the undo control available.
-    expect(page.locator("#unlockBidsBtn")).to_have_text("Unlock Bid")
+    # The button should now say "Unlock Bid"
+    expect(page.locator("#deleteLastBtn")).to_have_text("Unlock Bid")
 
 
 def test_unlock_bid_restores_bid_phase(start_game, play_hand):
@@ -47,11 +48,11 @@ def test_unlock_bid_restores_bid_phase(start_game, play_hand):
     expect(page.locator("#booksRow")).to_be_visible()
     
     # Click "Unlock Bid"
-    page.click("#unlockBidsBtn")
+    page.click("#deleteLastBtn")
     expect(page.locator("#status")).to_have_text("Bids unlocked.")
     
     # Verify bids are unlocked
-    expect(page.locator("#deleteLastBtn")).to_have_text("Undo Last Round")
+    expect(page.locator("#deleteLastBtn")).to_have_text("Delete Last Hand")
     expect(page.locator("#lockBidsBtn")).to_be_visible()
     expect(page.locator("#unbidNote")).to_be_visible()
     
@@ -75,7 +76,7 @@ def test_unlock_bid_does_not_delete_hand(start_game, play_hand):
     page.click("#lockBidsBtn")
     
     # Click "Unlock Bid"
-    page.click("#unlockBidsBtn")
+    page.click("#deleteLastBtn")
     
     # Scores should remain the same (hand was not deleted)
     expect(page.locator("#pillA")).to_have_text("Alice & Alex: 70")
@@ -93,7 +94,7 @@ def test_can_continue_after_unlock_bid(start_game, play_hand):
 
     # Round 2 - Lock bids, then unlock
     page.click("#lockBidsBtn")
-    page.click("#unlockBidsBtn")  # Unlock bid
+    page.click("#deleteLastBtn")  # Unlock bid
     
     # Now play round 2 normally
     play_hand(6, 7, 6, 7)
@@ -112,13 +113,13 @@ def test_submit_hand_updates_undo_label_and_restores_dealer_on_delete(start_game
     for round_number in range(2, 6):
         dealer = dealers[(round_number - 1) % 4]
         page.click("#lockBidsBtn")
-        expect(page.locator("#unlockBidsBtn")).to_have_text("Unlock Bid")
+        expect(page.locator("#deleteLastBtn")).to_have_text("Unlock Bid")
         page.click("#submitHandBtn")
         expect(page.locator("#pillRound")).to_have_text(f"Round {round_number + 1}")
         expect(page.locator("#dealerDisplay")).to_have_text(
             f"🂡 Dealer: {dealers[round_number % 4]}"
         )
-        expect(page.locator("#deleteLastBtn")).to_have_text("Undo Last Round")
+        expect(page.locator("#deleteLastBtn")).to_have_text("Delete Last Hand")
 
         page.click("#deleteLastBtn")
         expect(page.locator("#pillRound")).to_have_text(f"Round {round_number}")
@@ -152,7 +153,7 @@ def test_dealer_preserved_when_correcting_locked_bids(start_game):
             page.click("#resumeBtn")
         expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
 
-        page.click("#unlockBidsBtn")  # Unlock Bid
+        page.click("#deleteLastBtn")  # Unlock Bid
         expect(page.locator("#pillRound")).to_have_text(f"Round {round_number}")
         expect(page.locator("#dealerDisplay")).to_have_text(f"🂡 Dealer: {dealer}")
         assert page.locator("#handsTable tbody").inner_text() == history
@@ -170,7 +171,8 @@ def test_dealer_preserved_when_correcting_locked_bids(start_game):
         )).to_have_text(dealer)
 
 
-def test_unlock_unsubmitted_misdeal_preserves_dealer(start_game):
+@pytest.mark.parametrize("click_count", [1, 2])
+def test_unlock_unsubmitted_misdeal_preserves_dealer(start_game, click_count):
     page = start_game()
     page.locator("[data-for='booksA'][data-arrow='up']").click()
     page.click("#submitHandBtn")
@@ -178,7 +180,7 @@ def test_unlock_unsubmitted_misdeal_preserves_dealer(start_game):
     page.click("#lockBidsBtn")
     # A misdeal is abandoned before submitting its result.
     page.locator("[data-for='booksA'][data-arrow='up']").click()
-    page.locator("#unlockBidsBtn").click()
+    page.locator("#deleteLastBtn").click(click_count=click_count)
     expect(page.locator("#pillRound")).to_have_text("Round 2")
     expect(page.locator("#dealerDisplay")).to_have_text("🂡 Dealer: Bob")
     expect(page.locator("#handsTable tbody tr")).to_have_count(2)

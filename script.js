@@ -296,7 +296,7 @@ function restartGame() {
 function applyEndGameUI(winnerName) {
   $("#bidsRow").style.display = "none";
   $("#booksRow").style.display = "none";
-  const actions = document.querySelector(".toolbar:has(#submitHandBtn)");
+  const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "none";
   const message = formatWinningMessage(winnerName);
   const status = $("#status");
@@ -370,7 +370,7 @@ function applySnapshot(snapshot, { hideSetup = true } = {}) {
   if (state.gameOver && state.winnerName) {
     applyEndGameUI(state.winnerName);
   } else {
-    const actions = document.querySelector(".toolbar:has(#submitHandBtn)");
+    const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
     if (actions) actions.style.display = "";
   }
   updateNewGameButtons();
@@ -621,10 +621,15 @@ function updateNewGameButtons() {
 function updateDeleteButton() {
   const deleteBtn = $("#deleteLastBtn");
   if (!deleteBtn) return;
-  deleteBtn.disabled = state.hands.length === 0;
-  const unlockBtn = $("#unlockBidsBtn");
-  if (unlockBtn) {
-    unlockBtn.style.display = state.lockedBids && !state.gameOver ? "" : "none";
+  const hasHands = state.hands.length > 0;
+
+  // If bids are locked, show "Unlock Bid" button
+  if (state.lockedBids) {
+    deleteBtn.textContent = "Unlock Bid";
+    deleteBtn.classList.add("button-outline");
+  } else {
+    deleteBtn.textContent = hasHands ? "Delete Last Hand" : "New Game";
+    deleteBtn.classList.toggle("button-outline", hasHands);
   }
 }
 
@@ -1073,7 +1078,10 @@ function renderHands() {
 }
 
 function deleteLastHand() {
-  if (state.hands.length === 0) return;
+  if (state.hands.length === 0) {
+    restartGame();
+    return;
+  }
   stopConfetti();
   $("#winner").style.display = "none";
   state.hands.pop();
@@ -1182,7 +1190,7 @@ function deleteLastHand() {
   togglePhaseUI();
   updateNewGameButtons();
   updateDealerDisplay();
-  const actions = document.querySelector(".toolbar:has(#submitHandBtn)");
+  const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
   if (actions) actions.style.display = "";
   $("#bidA").textContent = "6";
   $("#bidB").textContent = "6";
@@ -1190,7 +1198,7 @@ function deleteLastHand() {
   $("#booksB").textContent = "7";
   updateUnbidNote();
   updateBooksSum();
-  $("#status").textContent = "Last round undone. Enter the corrected numbers.";
+  $("#status").textContent = "Deleted last hand.";
   saveState();
 }
 
@@ -1301,7 +1309,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#booksB").textContent = "7";
     updateBooksSum();
     updateUnbidNote();
-    const actions = document.querySelector(".toolbar:has(#submitHandBtn)");
+    const actions = document.querySelector(".toolbar:has(#deleteLastBtn)");
     if (actions) actions.style.display = "";
     saveState();
     if (resumeBtn) resumeBtn.style.display = "none";
@@ -1563,8 +1571,16 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Other buttons
-  $("#deleteLastBtn").onclick = deleteLastHand;
-  $("#unlockBidsBtn").onclick = unlockBids;
+  $("#deleteLastBtn").onclick = () => {
+    if (state.lockedBids) {
+      unlockBids();
+    } else {
+      deleteLastHand();
+    }
+  };
+  $("#undoFinalRoundBtn").onclick = () => {
+    if (state.gameOver) deleteLastHand();
+  };
   const newGameBtn = $("#newGameBtn");
   if (newGameBtn) newGameBtn.onclick = restartGame;
   const newGameBtnMain = $("#newGameBtnMain");

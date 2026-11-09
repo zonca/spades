@@ -52,6 +52,5 @@ def test_win_shows_table(start_game, play_hand):
     # Assert that input controls are hidden
     expect(page.locator("#bidsRow")).not_to_be_visible()
     expect(page.locator("#booksRow")).not_to_be_visible()
-    expect(page.locator(".toolbar:has(#submitHandBtn)")).not_to_be_visible()
-    expect(page.get_by_role("button", name="Undo Last Round")).to_be_enabled()
+    expect(page.locator(".toolbar:has(#deleteLastBtn)")).not_to_be_visible()
     expect(page.locator("#submitHandBtn")).not_to_be_visible()

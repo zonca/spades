@@ -11,7 +11,7 @@ The live app is served at https://zonca.github.io/spades/.
 
 ## Correcting a Round
 
-Use **Undo Last Round** below the hand controls to remove the latest submitted round and enter corrected numbers. Scores, bags, and the dealer return to their previous values. Undo also works with locked bids or after a win, and the corrected state is saved when you reload. **Unlock Bid** separately lets you change bids for the current, unsubmitted round.
+During a match, use **Delete Last Hand** to correct the previous round or **Unlock Bid** to change the current round's locked bids. When the game ends, **Undo Last Round** appears beside **New Game** in the winner panel. It reopens the final round and restores scores, bags, and the dealer so you can enter corrected numbers. This also works after resuming a saved finished game.
 
 ## Winning Score
 At game start, choose how many points the game is played to:
