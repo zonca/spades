@@ -98,6 +98,91 @@ function getDealerName(dealerIndex) {
   }
 }
 
+function getGameStatusText() {
+  const teamA = getTeamA().replace(/&/g, "and");
+  const teamB = getTeamB().replace(/&/g, "and");
+  const lastHand = state.hands[state.hands.length - 1];
+  const text = [
+    state.gameOver ? `Game over. ${formatWinningMessage(state.winnerName).replace(/&/g, "and")} Final round ${lastHand?.round || state.round}. Dealer: ${lastHand?.dealer || getDealerName(state.dealerIndex)}.` : `Round ${state.round}. Dealer: ${getDealerName(state.dealerIndex)}.`,
+    `Playing to ${getTargetScore()} points.`,
+    `${teamA}: ${state.totalA} points, ${state.bagsA} bags.`,
+    `${teamB}: ${state.totalB} points, ${state.bagsB} bags.`,
+  ];
+  const hand = state.gameOver ? lastHand : null;
+  const round = hand ? hand.round : state.round;
+  if (round > 1) {
+    text.push(state.gameOver ? "Final round bids." : state.lockedBids ? "Bids locked." : "Bids being entered, not yet locked.");
+    const bidA = hand ? hand.bidA : getSpinnerText("bidA");
+    const bidB = hand ? hand.bidB : getSpinnerText("bidB");
+    const blindA = hand ? hand.blindA : state.blind10A;
+    const blindB = hand ? hand.blindB : state.blind10B;
+    const nilA = hand ? hand.nilA : state.nilA;
+    const nilB = hand ? hand.nilB : state.nilB;
+    text.push(`${teamA} bid ${blindA ? "blind ten" : nilA ? "nil" : bidA}.`);
+    text.push(`${teamB} bid ${blindB ? "blind ten" : nilB ? "nil" : bidB}.`);
+  } else {
+    text.push("First round: no bids.");
+  }
+  if (state.gameOver && hand) {
+    text.push(`Final round books: ${teamA}, ${hand.booksA}; ${teamB}, ${hand.booksB}.`);
+  } else if (state.phase === "books") {
+    text.push(`Books entered, not yet submitted: ${teamA}, ${getSpinnerText("booksA")}; ${teamB}, ${getSpinnerText("booksB")}.`);
+  } else {
+    text.push("Waiting for bids to be locked before entering books.");
+  }
+  return text.join(" ");
+}
+
+function setupStatusSpeech() {
+  const button = $("#readStatusBtn");
+  const notice = $("#speechStatus");
+  const synth = window.speechSynthesis;
+  if (!synth || typeof window.SpeechSynthesisUtterance !== "function") {
+    button.disabled = true;
+    notice.textContent = "Reading aloud is unavailable in this browser.";
+    notice.hidden = false;
+    return;
+  }
+  let current = null;
+  const reset = () => {
+    current = null;
+    button.textContent = "Read Game Status Aloud";
+  };
+  button.onclick = () => {
+    if (current) {
+      reset();
+      synth.cancel();
+      return;
+    }
+    notice.hidden = true;
+    const utterance = new window.SpeechSynthesisUtterance(getGameStatusText());
+    utterance.lang = "en-US";
+    utterance.onend = () => {
+      if (current === utterance) reset();
+    };
+    utterance.onerror = (event) => {
+      if (current !== utterance) return;
+      reset();
+      if (event.error !== "canceled" && event.error !== "interrupted") {
+        notice.textContent = "Could not read aloud. Check your device's speech settings and try again.";
+        notice.hidden = false;
+      }
+    };
+    current = utterance;
+    button.textContent = "Stop Reading";
+    try {
+      synth.cancel();
+      synth.speak(utterance);
+    } catch {
+      utterance.onerror({ error: "unavailable" });
+    }
+  };
+  window.addEventListener("pagehide", () => {
+    reset();
+    synth.cancel();
+  });
+}
+
 function updateDealerDisplay() {
   const dealerRow = $("#dealerRow");
   const dealerDisplay = $("#dealerDisplay");
@@ -1571,6 +1656,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Other buttons
+  setupStatusSpeech();
   $("#deleteLastBtn").onclick = () => {
     if (state.lockedBids) {
       unlockBids();

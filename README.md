@@ -13,6 +13,10 @@ The live app is served at https://zonca.github.io/spades/.
 
 During a match, use **Delete Last Hand** to correct the previous round or **Unlock Bid** to change the current round's locked bids. When the game ends, **Undo Last Round** appears beside **New Game** in the winner panel. It reopens the final round and restores scores, bags, and the dealer so you can enter corrected numbers. This also works after resuming a saved finished game.
 
+## Read Game Status Aloud
+
+Use **Read Game Status Aloud** below the scoreboard to hear the current round, dealer, winning target, scores, bags, bids, and books. Draft entries are identified as unsubmitted. Finished games announce the winner and final round. Press **Stop Reading** to stop playback. Speech uses the browser's text-to-speech support; voice availability depends on the device.
+
 ## Winning Score
 At game start, choose how many points the game is played to:
 
